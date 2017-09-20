@@ -55,11 +55,11 @@ class VehicleMD2WRP(Vehicle):
                     #If another vehicle arrives before me (or at the same time), reduce the age of the task under consideration
                     if self.targets[otherArrivalIndex, 1] <= (self.ageTracker[index]+tij):                        
                         ageModifier = self.targets[otherArrivalIndex, 1]
-                        print '****** Task {} age reduced! *****'.format(index+1)
+                        print '   *** Task {} age reduced!'.format(index+1)
                     #If another vehicle will be arriving after me, don't go to that task
                     if self.targets[otherArrivalIndex, 1] > (self.ageTracker[index]+tij):                        
                         ageModifier = (self.ageTracker[index]+tij)
-                        print '****** Task {} utility set to zero! *****'.format(index+1)
+                        print '   *** Task {} utility set to zero!'.format(index+1)
 
             utility = (math.exp(-self.beta*tij)*self.w[index]*(self.ageTracker[index]+tij-ageModifier))*100000
             utilities.append(utility)

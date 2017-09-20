@@ -185,17 +185,16 @@ def main():
             #Save task visit times
             visitOrder[taskStart-1] = [decider.ID, decider.targets[decider._indexer, 0], decider.targets[decider._indexer, 1]]
 
-            #Update age of visited task in deciding vehicle's own age tracker
+            #Zero-out age of visited task in deciding vehicle's own age tracker
             decider.ageTracker[int(decider.targets[decider._indexer, 0])-1] = 0.0
             print '   Current ageTracker = {}'.format(np.around(decider.ageTracker, 3))
 
-            #Update current vehicle location
+            #Update current vehicle location (old destination is new location)
             decider.location[0] = decider.targets[decider._indexer, 0]
-            decider.location[1] = decider.targets[decider._indexer, 1]         
-
-            ### Implement the actual task selection algorithm (the main work right here)        
+            decider.location[1] = decider.targets[decider._indexer, 1]
             
             #Calculate *measurement* travel times from current location to all possible destinations
+            #   These are the travel times that will be used for decision making, not actual flight times
             if taskSelectionDistanceMeasure == 'euclidean':
                 travelTimes = decider.calctraveleuc(taskVector)
                 print '   Travel time to each task: {}'.format(np.around(travelTimes, 3))
@@ -221,12 +220,10 @@ def main():
 
             ### With all that done, it's time for the next vehicle to decide...the loop restarts
 
-            ### All data should be documented, so now just close things out!
-
             print '\nReady for next Task!\n'
             print '*******************************************\n'
 
-        #Save the last task visit time
+        #Save the final task visit
         visitOrder[taskStart] = [decider.ID, decider.targets[decider._indexer, 0], decider.targets[decider._indexer, 1]]
 
         print ''
@@ -247,8 +244,6 @@ def main():
     # simDataPath = './Data/'   
 
     # print 'Saving simulation data to {}'.format(simDataPath)
-
-
 
 
     # results = {'visitOrder':visitOrder}

@@ -134,7 +134,7 @@ def main():
     # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
 
     #How many decision to make? (i.e. no. of tasks to accomplish)
-    taskStarts = 450
+    taskStarts = 10
 
     #What type of communication to use?
     # commModes = ['none']
