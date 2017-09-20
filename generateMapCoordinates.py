@@ -30,13 +30,12 @@ def generateMapCoordinates(taskGeometry):
             2000+3000.j, 2000+2000.j, 2000+1000.j, 2000+0.j, 3000+3000.j, 3000+2000.j, 3000+1000.j, 3000+0.j]])
 
     #10 "randomly" placed tasks (wide-area surveillance)
-    if taskGeometry == 'random':
-        rawTaskCoords = np.array([[-4500-1000.j, -2000+1000.j, -1000+1000.j, -2500+3500.j, 2000-2500.j,
-            1000-1000.j, 3000+1000.j, 1000+2000.j, 5000+3500.j, 2000+5500.j]])
+    if taskGeometry == 'random':        
+        xTaskCoords = [-4500, -2000, -1000, -2500,  2000,  1000, 3000, 1000, 5000, 2000]
+        yTaskCoords = [-1000,  1000,  1000,  3500, -2500, -1000, 1000, 2000, 3500, 5500]
+    
     #3 clusters of tasks (10 total)
     if taskGeometry == 'clusters':
-        # rawTaskCoords = np.array([[-2777+2961.j, -1888+2114.j, -2550+927.j,
-        #     2500+2500.j, 3916+1505.j, 2756+3552.j, 1850-2800.j, 2882-1915.j, 2518-3833.j, 3528-3274.j]])
         xTaskCoords = [-2777, -1888, -2550, 2500, 3916, 2756,  1850,  2882,  2518,  3528]
         yTaskCoords = [2961,   2114,  927,  2500, 1505, 3552, -2800, -1915, -3833, -3274]
 

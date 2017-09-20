@@ -1,14 +1,13 @@
 from __future__ import division
 # import itertools
 # import os
-# import shutil
 # import matplotlib.pyplot as plt
-
 # import pandas as pd
 
+import shutil
 import sys
 import math
-import xml.etree.ElementTree
+import xml.etree.ElementTree as ET
 
 import numpy as np
 
@@ -16,7 +15,7 @@ import VehicleClass
 import TaskClass
 
 
-def loadScenarioConfig(trade):
+def     loadScenarioConfig(trade):
 
     print '      Loading scenario configuration...'            
 
@@ -40,9 +39,7 @@ def loadScenarioConfig(trade):
     return taskSelectionMethod, taskSelectionDistanceMeasure, taskStarts, commMode
 
 
-def loadTaskConfig(trade):
-
-     
+def loadTaskConfig(trade):     
 
     taskinfo = trade.find('Task_Info')  
     taskGeometry = taskinfo.find('TaskGeometry').text
@@ -85,11 +82,12 @@ def loadVehicleConfig(trade, taskSelectionMethod):
         print '            Vehicle Speed:', vehSpeed
         vehBankAngle = float(vehicle.find('vehBankAngle').text)
         print '            Vehicle Bank Angle: ', vehBankAngle
+        turnRadius = vehSpeed**2/(9.807*math.tan(vehBankAngle*math.pi/180))
 
         if taskSelectionMethod == 'manual':
             tour = eval(vehicle.find('tour').text)
             print '            Tour={}'.format(tour)
-            vehicleObj = VehicleClass.VehicleManual(index, vehicleID, initLocation, initHeading, vehSpeed, vehBankAngle,
+            vehicleObj = VehicleClass.VehicleManual(index, vehicleID, initLocation, initHeading, vehSpeed, turnRadius,
             numVehicles, tour) #INSTATIATE VEHICLE OBJECT        
                 
         if taskSelectionMethod == 'md2wrp':
@@ -97,7 +95,7 @@ def loadVehicleConfig(trade, taskSelectionMethod):
             print '            Beta={}'.format(beta)
             weightVector = eval(vehicle.find('w').text)
             print '            Weight Vector={}'.format(weightVector)      
-            vehicleObj = VehicleClass.VehicleMD2WRP(index, vehicleID, initLocation, initHeading, vehSpeed, vehBankAngle,
+            vehicleObj = VehicleClass.VehicleMD2WRP(index, vehicleID, initLocation, initHeading, vehSpeed, turnRadius,
             numVehicles, beta, weightVector) #INSTATIATE VEHICLE OBJECT
 
         vehicleVector.append(vehicleObj)
@@ -128,7 +126,7 @@ def main():
     simPath = sys.argv[1]
 
     #Parse the simulation configuration file
-    e = xml.etree.ElementTree.parse(simPath+'simConfiguration.xml').getroot()
+    e = ET.parse(simPath+'simConfiguration.xml').getroot()
 
     #Perform a simulation for each trade
     for trade in e.findall('Trade'):
@@ -144,9 +142,6 @@ def main():
     
         #Parse and load the vehicle configuration; returns a vector of vehicle objects
         vehicleVector = loadVehicleConfig(trade, taskSelectionMethod)
-
-    
-
     
     ######################################################################
     ######################################################################    
@@ -167,11 +162,12 @@ def main():
         ### MAIN SIM LOOP ###
         print ''
         print '*******************************************'
-        print '*********Beginning Simulation**************'
+        print '*********   Beginning Simulation   ********'
         print '*******************************************'
         print ''
 
-        visitOrder = np.zeros((taskStarts+1, 3))
+        # visitOrder = np.zeros((taskStarts+1, 3))
+        visitOrder = []        
         for taskStart in xrange(1, taskStarts+1):
 
             print 'Task Start #[{}]\n'.format(taskStart)
@@ -183,7 +179,7 @@ def main():
 
             ### Documentation time...save data for later analysis
             #Save task visit times
-            visitOrder[taskStart-1] = [decider.ID, decider.targets[decider._indexer, 0], decider.targets[decider._indexer, 1]]
+            visitOrder.append([decider.ID, decider.targets[decider._indexer, 0], decider.targets[decider._indexer, 1]])
 
             #Zero-out age of visited task in deciding vehicle's own age tracker
             decider.ageTracker[int(decider.targets[decider._indexer, 0])-1] = 0.0
@@ -193,16 +189,24 @@ def main():
             decider.location[0] = decider.targets[decider._indexer, 0]
             decider.location[1] = decider.targets[decider._indexer, 1]
             
-            #Calculate *measurement* travel times from current location to all possible destinations
-            #   These are the travel times that will be used for decision making, not actual flight times
+            ### Calculate travel times from current location to all possible destinations 
+            # These are the actual travel times, based on vehicle flight dynamics 
+            travelTimesFlight, headings = decider.calctraveldub(taskVector)
+
+            # These are the travel times that will be used for decision making (not necessarily the actual flight times)
             if taskSelectionDistanceMeasure == 'euclidean':
-                travelTimes = decider.calctraveleuc(taskVector)
-                print '   Travel time to each task: {}'.format(np.around(travelTimes, 3))
-            # travelTimes = [.3, .5, 1]
+                travelTimesMeasure = decider.calctraveleuc(taskVector)            
+            if taskSelectionDistanceMeasure == 'dubins':
+                travelTimesMeasure = travelTimesFlight
+
+            print '   Actual flight times: {}'.format(np.around(travelTimesFlight, 3))
+            print '   Arrival headings: {}'.format(np.around(headings, 1))
+            print '   Measurement flight times: {}'.format(np.around(travelTimesMeasure, 3))
 
             #Select next target
-            decider.selecttask(travelTimes)
+            decider.selecttask(travelTimesFlight, travelTimesMeasure, headings)
             print '   New target: {}'.format(decider.targets[decider._indexer, :])
+            print '   Arrival heading: {}'.format(decider.heading)
 
             #Increment all ages in vehicle's own age tracker by travel time
             decider.ageTracker = np.add(decider.ageTracker, np.ones(decider.ageTracker.shape[0])*decider.targets[decider._indexer, 2])
@@ -223,29 +227,55 @@ def main():
             print '\nReady for next Task!\n'
             print '*******************************************\n'
 
-        #Save the final task visit
-        visitOrder[taskStart] = [decider.ID, decider.targets[decider._indexer, 0], decider.targets[decider._indexer, 1]]
+        #Save the final task visits for each vehicle
+        for vehicle in vehicleVector:
+            visitOrder = np.append(visitOrder, [[vehicle.ID, vehicle.targets[vehicle._indexer, 0], vehicle.targets[vehicle._indexer, 1]]], axis=0)
 
+        visitOrder = sorted(visitOrder,key=lambda x: x[2])
+        visitOrder = np.array(visitOrder) 
+
+        
         print ''
         print '*******************************************'
-        print '*********Simulation Complete***************'
+        print '*********   Simulation Complete   *********'
         print '*******************************************'
         print ''
 
         #Display the visit history to screen
-        print 'Simulation Visit History:'
-        visitOrder[:,2] = visitOrder[:,2]*vehicleVector[0].normFactor
+        print 'Simulation Visit History:'        
         print(visitOrder)
 
-    # print ''
-    # print '******   Packaging Results   **************'
-    # print ''
+        simDataPath = './Data/'   
 
-    # simDataPath = './Data/'   
+        print ''
+        print 'Saving simulation data to {}'.format(simDataPath)
 
-    # print 'Saving simulation data to {}'.format(simDataPath)
+        fileName = simDataPath + 'simData.xml'
 
+        configFile = open(fileName,'w')
+        configFile.write('<Sim_Data>\n')
 
+        configFile.write('\t<Trade>\n')
+        configFile.write('\t\t<tradeID>{}</tradeID>\n'.format(tradeID))
+        configFile.write('\t\t<taskSelectionMethod>{}</taskSelectionMethod>\n'.format(taskSelectionMethod))
+        configFile.write('\t\t<beta>{}</beta>\n'.format(vehicleVector[0].beta))
+        configFile.write('\t\t<w>{}</w>\n'.format(vehicleVector[0].w))
+        configFile.write('\t\t<normFactor>{}</normFactor>\n'.format(vehicleVector[0].normFactor))
+        configFile.write('\t\t<taskGeometry>{}</taskGeometry>\n'.format(taskGeometry))
+        configFile.write('\t\t<commMode>{}</commMode>\n'.format(commMode))        
+        for visit in visitOrder:
+            configFile.write('\t\t<Visit>\n')
+            configFile.write('\t\t\t<Vehicle>{}</Vehicle>\n'.format(visit[0]))
+            configFile.write('\t\t\t<Task>{}</Task>\n'.format(visit[1]))
+            configFile.write('\t\t\t<Priority>{}</Priority>\n'.format(taskVector[int(visit[1]-1)].priority))
+            configFile.write('\t\t\t<Time>{}</Time>\n'.format(visit[2]))
+            configFile.write('\t\t</Visit>\n')
+
+        configFile.write('\t</Trade>\n')
+        configFile.write('</Sim_Data>')
+        configFile.close()
+
+        
     # results = {'visitOrder':visitOrder}
     # resultsPickle = '{0}Data/Trade_{1}_Results.pickle'.format(simPath, tradeID)
     # # pickle.dump(visitOrder, open(resultsPickle, "wb"))

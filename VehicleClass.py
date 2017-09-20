@@ -3,12 +3,13 @@ import random
 import itertools
 import math
 import numpy as np
+import dubins
 
 class Vehicle:
 
     """A class for PISR vehicles."""
 
-    def __init__(self, _indexer, ID, initLoc, initHead, speed, bankAngle, numVehicles):              
+    def __init__(self, _indexer, ID, initLoc, initHead, speed, turnRadius, numVehicles):              
 
         self.ID = ID
         self._indexer = _indexer   #since IDs are usually 100, 200, etc, this makes vehicle index referencing easier
@@ -19,7 +20,7 @@ class Vehicle:
         self.targets[self._indexer, 2] = 0.0
         self.heading = initHead        
         self.speed = speed
-        self.bankAngle = bankAngle
+        self.turnRadius = turnRadius
         self.normFactor = 0
 
     def calctraveleuc(self, taskVector):
@@ -34,7 +35,35 @@ class Vehicle:
         travelTimes = np.array(travelTimes)
 
         return travelTimes
+
+    def calctraveldub(self, taskVector):
+        travelTimes = []
+        headings = []
+        x0 = taskVector[int(self.location[0]-1)].location[0]
+        y0 = taskVector[int(self.location[0]-1)].location[1]
+        theta0 = self.heading
+        for index, task, in enumerate(taskVector):
+            pathLengthVector = []
+            x1 = task.location[0]
+            y1 = task.location[1]
+            thetas = np.arange(0, 20, 1.25)*(math.pi/10)
+            for theta1 in thetas:                                
+                pathLength = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), self.turnRadius)                
+                if (int(self.location[0]-1) == index) & (theta0==theta1):
+                    pathLength = float('inf')
+                pathLengthVector.append(pathLength)
+            dist = min(pathLengthVector)
+            distindex = np.argmin(pathLengthVector)
+            heading = thetas[distindex]*(180/math.pi)            
+            time = dist/self.speed
+            time = time/self.normFactor
+            travelTimes.append(time)
+            headings.append(heading)
+
+        travelTimes = np.array(travelTimes)
+        headings = np.array(headings)
         
+        return travelTimes, headings
 
 class VehicleMD2WRP(Vehicle):
 
@@ -46,9 +75,9 @@ class VehicleMD2WRP(Vehicle):
         self.beta = beta
         self.w = w
 
-    def selecttask(self, travelTimes):
+    def selecttask(self, travelTimesFlight, travelTimesMeasure, headings):
         utilities = []               
-        for index, tij in enumerate(travelTimes):
+        for index, tij in enumerate(travelTimesMeasure):
             ageModifier = 0 
             for otherArrivalIndex, otherArrival in enumerate(self.targets[:, 0]):
                 if ((otherArrival == index+1) & (otherArrivalIndex != self._indexer)):                    
@@ -69,10 +98,11 @@ class VehicleMD2WRP(Vehicle):
         maxUtility = max(utilities)
         selectedTask = [index+1 for index, utility in enumerate(utilities) if utility == maxUtility]
         print '   Task {} has the highest utility. ({})'.format(selectedTask[0], maxUtility)
-        travelTime = travelTimes[selectedTask[0]-1]
+        travelTimeFlight = travelTimesFlight[selectedTask[0]-1]
         self.targets[self._indexer, 0] = selectedTask[0]
-        self.targets[self._indexer, 1] += travelTime
-        self.targets[self._indexer, 2] = travelTime
+        self.targets[self._indexer, 1] += travelTimeFlight
+        self.targets[self._indexer, 2] = travelTimeFlight
+        self.heading = headings[selectedTask[0]-1]
 
     def cxnone(self):
         pass
