@@ -9,15 +9,12 @@ from __future__ import division
 import sys
 import math
 import xml.etree.ElementTree
-import numpy as np
 
-from operator import attrgetter, itemgetter
+import numpy as np
 
 import VehicleClass
 import TaskClass
 
-
-# def loadConfigFiles():    
 
 def loadScenarioConfig(trade):
 
@@ -40,31 +37,27 @@ def loadScenarioConfig(trade):
         commMode = item.get('name')
         print '         Comm Mode:', commMode
 
-    print '\n'
-
     return taskSelectionMethod, taskSelectionDistanceMeasure, taskStarts, commMode
 
 
 def loadTaskConfig(trade):
 
-    print '      Loading task configurations...' 
+     
 
     taskinfo = trade.find('Task_Info')  
     taskGeometry = taskinfo.find('TaskGeometry').text
     numTasks = len(taskinfo.findall('Task'))
     
-    print '         There are', numTasks, 'tasks ({}):\n'.format(taskGeometry)
+    print ''
+    print '      Loading task configurations ({} tasks, {})...'.format(numTasks, taskGeometry)
 
     taskVector = []
     for task in taskinfo.findall('Task'):
-        taskID = int(task.find('ID').text)        
-        print '         Task', taskID
+        taskID = int(task.find('ID').text)
         xCoord = float(task.find('xCoord').text)
         yCoord = float(task.find('yCoord').text)
-        print '            Location: (', xCoord, ',', yCoord, ')'
-        priority = float(task.find('priority').text)
-        print '            Priority: ', priority, '\n'   
-        
+        priority = float(task.find('priority').text)  
+        print '         Task {} @ ({},{}), Priority={}'.format(taskID, xCoord, yCoord, priority)
         taskObj = TaskClass.Task(taskID, xCoord, yCoord, priority)  #INSTATIATE TASK OBJECT  
         taskVector.append(taskObj)    #ADD OBJECT TO VECTOR OF TASK OBJECTS
 
@@ -72,12 +65,13 @@ def loadTaskConfig(trade):
 
 def loadVehicleConfig(trade, taskSelectionMethod):
 
-    print '      Loading vehicle configurations...'
+    
 
     vehinfo = trade.find('Vehicle_Info')
     numVehicles = len(vehinfo.findall('Vehicle'))
    
-    print '         There are', numVehicles, 'vehicles:\n'
+    print ''
+    print '      Loading vehicle configurations ({} vehicles)...'.format(numVehicles)
 
     vehicleVector = []
     for index, vehicle in enumerate(vehinfo.findall('Vehicle')):
@@ -106,7 +100,6 @@ def loadVehicleConfig(trade, taskSelectionMethod):
             vehicleObj = VehicleClass.VehicleMD2WRP(index, vehicleID, initLocation, initHeading, vehSpeed, vehBankAngle,
             numVehicles, beta, weightVector) #INSTATIATE VEHICLE OBJECT
 
-        print '\n' 
         vehicleVector.append(vehicleObj)
 
     return vehicleVector
@@ -140,6 +133,7 @@ def main():
     #Perform a simulation for each trade
     for trade in e.findall('Trade'):
         tradeID = int(trade.find('tradeID').text)
+        print '***************************************'
         print '   Loading TradeID={}'.format(tradeID)
 
         # Parse and load the scenario configuration parameters
@@ -162,7 +156,7 @@ def main():
 
         #Calculate longest Euclidean distance on the map (for normalization)
         longestDistance = calcLongestDistance(taskVector)
-        print 'Longest Euclidean distance between tasks: {}'.format(longestDistance)
+        print '\nLongest Euclidean distance between tasks: {}'.format(longestDistance)
 
         #Calculate normalizing factors for each vehicle (based on speed, so can be different per vehicle)
         for vehicle in vehicleVector:
