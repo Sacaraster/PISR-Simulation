@@ -130,7 +130,7 @@ def main():
     
     #Will travel time be based on Euclidean or Dubins paths?
     taskSelectionDistanceMeasures = ['euclidean']
-    taskSelectionDistanceMeasures = ['dubins']
+    # taskSelectionDistanceMeasures = ['dubins']
     # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
 
     #How many decision to make? (i.e. no. of tasks to accomplish)
@@ -139,7 +139,7 @@ def main():
     #What type of communication to use?
     commModes = ['none']
     # commModes = ['CxBC']
-    # commModes = ['CxBD']
+    commModes = ['CxBD']
     # commModes = ['none', 'CxBD']    
     ###########################
 
@@ -147,12 +147,14 @@ def main():
     ### VEHICLES #####
     #Start Locations (task where each vehicle will start; length of this array is number of vehicles)
     initLocations = np.array([[1]])
-    # initLocations = np.array([[1], [4]])
+    initLocations = np.array([[1], [1]])
+    initLocations = np.array([[1], [1], [1]])
     # initLocations = np.array([[1], [4], [8], [9]])
 
     #Initial Headings (degrees)
     initHeadings = np.array([[0]])
-    # initHeadings = np.array([[0], [0]])
+    initHeadings = np.array([[0], [0]])
+    initHeadings = np.array([[0], [0], [0]])
     # initHeadings = np.array([[0], [0], [0], [0]])
 
     #Vehicle speed (m/s)
@@ -164,7 +166,7 @@ def main():
     #For 'md2wrp', specify beta and weights (this setup script currently assumes each vehicle has same parameters,
     #but sim can handle different betas and weights
     #...ignored if not using md2wrp
-    betas = [7.0]
+    betas = np.arange(0,10.25, .25)
     ws = np.array([[1], [1], [1]])
     ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
@@ -182,7 +184,7 @@ def main():
     # taskGeometry = 'custom'
 
     # priorities = np.array([[3], [2], [1]])
-    priorities = np.array([[1], [1], [1], [1], [10], [1], [1], [1], [1], [1]])
+    priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
     # for taskGeometry = 'custom'
     if taskGeometry == 'custom':

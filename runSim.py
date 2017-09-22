@@ -125,6 +125,13 @@ def main():
     #Argument supplying the location of the simulation configuration files
     simPath = sys.argv[1]
 
+    #Create and open the XML where simulation data will be saved
+    simDataPath = './Data/'
+    print '\nSimulation data will be saved to {}\n'.format(simDataPath)
+    fileName = simDataPath + 'simData.xml'
+    configFile = open(fileName,'w')
+    configFile.write('<Sim_Data>\n')
+
     #Parse the simulation configuration file
     e = ET.parse(simPath+'simConfiguration.xml').getroot()
 
@@ -132,7 +139,8 @@ def main():
     for trade in e.findall('Trade'):
         tradeID = int(trade.find('tradeID').text)
         print '***************************************'
-        print '   Loading TradeID={}'.format(tradeID)
+        print '          Loading TradeID={}        '.format(tradeID)
+        print '***************************************'
 
         # Parse and load the scenario configuration parameters
         taskSelectionMethod, taskSelectionDistanceMeasure, taskStarts, commMode = loadScenarioConfig(trade)       
@@ -151,7 +159,8 @@ def main():
 
         #Calculate longest Euclidean distance on the map (for normalization)
         longestDistance = calcLongestDistance(taskVector)
-        print '\nLongest Euclidean distance between tasks: {}'.format(longestDistance)
+        print ''
+        print '      Longest Euclidean distance between tasks: {}'.format(longestDistance)
 
         #Calculate normalizing factors for each vehicle (based on speed, so can be different per vehicle)
         for vehicle in vehicleVector:
@@ -161,21 +170,19 @@ def main():
 
         ### MAIN SIM LOOP ###
         print ''
-        print '*******************************************'
-        print '*********   Beginning Simulation   ********'
-        print '*******************************************'
+        print '   ******    Beginning Simulation   **********'
         print ''
 
         # visitOrder = np.zeros((taskStarts+1, 3))
         visitOrder = []        
         for taskStart in xrange(1, taskStarts+1):
 
-            print 'Task Start #[{}]\n'.format(taskStart)
+            print '   Task Start #[{}]\n'.format(taskStart)
 
             # Decide which vehicle makes the next task selection, based on earliest arrival time
             decider = min(vehicleVector, key=lambda x: x.targets[x._indexer, 1])
-            print 'Vehicle', decider.ID, 'is selecting the next task.'
-            print '   Just arrived: {}'.format(decider.targets[decider._indexer, :])
+            print '   Vehicle', decider.ID, 'is selecting the next task.'
+            print '      Just arrived: {}'.format(decider.targets[decider._indexer, :])
 
             ### Documentation time...save data for later analysis
             #Save task visit times
@@ -183,7 +190,7 @@ def main():
 
             #Zero-out age of visited task in deciding vehicle's own age tracker
             decider.ageTracker[int(decider.targets[decider._indexer, 0])-1] = 0.0
-            print '   Current ageTracker = {}'.format(np.around(decider.ageTracker, 3))
+            print '      Current ageTracker = {}'.format(np.around(decider.ageTracker, 3))
 
             #Update current vehicle location (old destination is new location)
             decider.location[0] = decider.targets[decider._indexer, 0]
@@ -199,14 +206,14 @@ def main():
             if taskSelectionDistanceMeasure == 'dubins':
                 travelTimesMeasure = travelTimesFlight
 
-            print '   Actual flight times: {}'.format(np.around(travelTimesFlight, 3))
-            print '   Arrival headings: {}'.format(np.around(headings, 1))
-            print '   Measurement flight times: {}'.format(np.around(travelTimesMeasure, 3))
+            print '      Actual flight times: {}'.format(np.around(travelTimesFlight, 3))
+            print '      Arrival headings: {}'.format(np.around(headings, 1))
+            print '      Measurement flight times: {}'.format(np.around(travelTimesMeasure, 3))
 
             #Select next target
             decider.selecttask(travelTimesFlight, travelTimesMeasure, headings)
-            print '   New target: {}'.format(decider.targets[decider._indexer, :])
-            print '   Arrival heading: {}'.format(decider.heading)
+            print '      New target: {}'.format(decider.targets[decider._indexer, :])
+            print '      Arrival heading: {}'.format(decider.heading)
 
             #Increment all ages in vehicle's own age tracker by travel time
             decider.ageTracker = np.add(decider.ageTracker, np.ones(decider.ageTracker.shape[0])*decider.targets[decider._indexer, 2])
@@ -224,8 +231,9 @@ def main():
 
             ### With all that done, it's time for the next vehicle to decide...the loop restarts
 
-            print '\nReady for next Task!\n'
-            print '*******************************************\n'
+            print ''
+            print '   Ready for next Task!\n'
+            print '   *******************************************\n'
 
         #Save the final task visits for each vehicle
         for vehicle in vehicleVector:
@@ -236,25 +244,15 @@ def main():
 
         
         print ''
-        print '*******************************************'
-        print '*********   Simulation Complete   *********'
-        print '*******************************************'
+        print '   ******     Simulation Complete   ***********'
         print ''
 
         #Display the visit history to screen
-        print 'Simulation Visit History:'        
+        print '   Simulation Visit History:'        
         print(visitOrder)
-
-        simDataPath = './Data/'   
-
         print ''
-        print 'Saving simulation data to {}'.format(simDataPath)
 
-        fileName = simDataPath + 'simData.xml'
-
-        configFile = open(fileName,'w')
-        configFile.write('<Sim_Data>\n')
-
+        #Write the sim data for this trade to the sim data XML
         configFile.write('\t<Trade>\n')
         configFile.write('\t\t<tradeID>{}</tradeID>\n'.format(tradeID))
         configFile.write('\t\t<taskSelectionMethod>{}</taskSelectionMethod>\n'.format(taskSelectionMethod))
@@ -270,10 +268,11 @@ def main():
             configFile.write('\t\t\t<Priority>{}</Priority>\n'.format(taskVector[int(visit[1]-1)].priority))
             configFile.write('\t\t\t<Time>{}</Time>\n'.format(visit[2]))
             configFile.write('\t\t</Visit>\n')
-
         configFile.write('\t</Trade>\n')
-        configFile.write('</Sim_Data>')
-        configFile.close()
+        
+    #Closeout the sim data XML file after all trades are complete
+    configFile.write('</Sim_Data>')
+    configFile.close()
 
         
     # results = {'visitOrder':visitOrder}
