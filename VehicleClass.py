@@ -21,6 +21,7 @@ class Vehicle:
         self.heading = initHead        
         self.speed = speed
         self.turnRadius = turnRadius
+        self.trajectory = []
         self.normFactor = 0
 
     def calctraveleuc(self, taskVector):
@@ -39,22 +40,31 @@ class Vehicle:
     def calctraveldub(self, taskVector):
         travelTimes = []
         headings = []
+        trajectories = []
+        #Coordinates of current location and current heading
         x0 = taskVector[int(self.location[0]-1)].location[0]
         y0 = taskVector[int(self.location[0]-1)].location[1]
         theta0 = self.heading
+        #For every candidate task...
+        #Discretized arrival headings (try each of these and pick the one with the shortest travel distance)
+        thetas = np.arange(0, 20, 1.25)*(math.pi/10)
         for index, task, in enumerate(taskVector):
             pathLengthVector = []
+            #Coordinates of candidate task
             x1 = task.location[0]
-            y1 = task.location[1]
-            thetas = np.arange(0, 20, 1.25)*(math.pi/10)
+            y1 = task.location[1]            
             for theta1 in thetas:                                
-                pathLength = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), self.turnRadius)                
+                #Cacluate the path length for given arrival angle
+                pathLength = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), self.turnRadius)               
+                #Don't allow arriving at the current task at the current heading, which would result in path length of '0'
                 if (int(self.location[0]-1) == index) & (theta0==theta1):
                     pathLength = float('inf')
                 pathLengthVector.append(pathLength)
+            #find the shortest travel distance for all arrival heading options
             dist = min(pathLengthVector)
             distindex = np.argmin(pathLengthVector)
-            heading = thetas[distindex]*(180/math.pi)            
+            heading = thetas[distindex]         
+            #calculate travel time based on vehicle speed, then normalize the travel time
             time = dist/self.speed
             time = time/self.normFactor
             travelTimes.append(time)
@@ -64,6 +74,24 @@ class Vehicle:
         headings = np.array(headings)
         
         return travelTimes, headings
+
+    def calctrajectory(self, selectedTask, taskVector, headings):
+       
+        #current location and heading
+        x0 = taskVector[int(self.location[0]-1)].location[0]
+        y0 = taskVector[int(self.location[0]-1)].location[1]
+        theta0 = self.heading
+        
+        #destination and arrival heading
+        x1 = taskVector[selectedTask-1].location[0]
+        y1 = taskVector[selectedTask-1].location[1]
+        theta1 = headings[selectedTask-1]
+        
+        #calc dubins trajectory to destination
+        trajectory, _ = dubins.path_sample((x0, y0, theta0), (x1, y1, theta1), self.turnRadius, 1)
+
+        return trajectory
+
 
 class VehicleMD2WRP(Vehicle):
 
@@ -75,7 +103,7 @@ class VehicleMD2WRP(Vehicle):
         self.beta = beta
         self.w = w
 
-    def selecttask(self, travelTimesFlight, travelTimesMeasure, headings):
+    def selecttask(self, travelTimesMeasure):
         utilities = []               
         for index, tij in enumerate(travelTimesMeasure):
             ageModifier = 0 
@@ -97,12 +125,10 @@ class VehicleMD2WRP(Vehicle):
             print '      Task {} utility = {}'.format(index+1, taskUtility)
         maxUtility = max(utilities)
         selectedTask = [index+1 for index, utility in enumerate(utilities) if utility == maxUtility]
-        print '   Task {} has the highest utility. ({})'.format(selectedTask[0], maxUtility)
-        travelTimeFlight = travelTimesFlight[selectedTask[0]-1]
-        self.targets[self._indexer, 0] = selectedTask[0]
-        self.targets[self._indexer, 1] += travelTimeFlight
-        self.targets[self._indexer, 2] = travelTimeFlight
-        self.heading = headings[selectedTask[0]-1]
+        selectedTask = int(selectedTask[0])
+        print '   Task {} has the highest utility. ({})'.format(selectedTask, maxUtility)          
+
+        return selectedTask      
 
     def cxnone(self):
         pass

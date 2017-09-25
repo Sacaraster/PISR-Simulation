@@ -4,7 +4,8 @@ def generateMapCoordinates(taskGeometry):
 
     #3 tasks in an equilateral triangle
     if taskGeometry == 'eqtri':
-        rawTaskCoords = np.array([[-250.-250.j, 250.-250.j, 0.+183.j]])
+        xTaskCoords = [-250,  250, 0]
+        yTaskCoords = [-250, -250, 183]
 
     #3 tasks in an isosceles triangle
     if taskGeometry == 'isotri':
@@ -14,20 +15,19 @@ def generateMapCoordinates(taskGeometry):
     #10 tasks placed in a circle
     if taskGeometry == 'circle':        
         numTasks = 10
-        rawTaskCoords = np.empty([1, numTasks], dtype=complex)
-        coord = 0+0.j
+        xTaskCoords = []
+        yTaskCoords = []
+        coord = 0
         radius = 5000
-        theta = (math.pi*2)/numTasks     
-        for task in range(1,11,1):
-            coord = radius*math.cos(theta*task)+radius*math.sin(theta*task)*1j
-            # coord.imag = radius*math.sin(theta*task)            
-            rawTaskCoords[0, task-1] = coord
-            # print rawTaskCoords
+        theta = (2*math.pi)/numTasks     
+        for task in xrange(1,numTasks+1,1):
+            xTaskCoords.append(radius*math.cos(theta*task))
+            yTaskCoords.append(radius*math.sin(theta*task))          
 
     #16 tasks in a 4x4 grid
     if taskGeometry == 'grid':
-        rawTaskCoords = np.array([[0+3000.j, 0+2000.j, 0+1000.j, 0+0.j, 1000+3000.j, 1000+2000.j, 1000+1000.j, 1000+0.j,
-            2000+3000.j, 2000+2000.j, 2000+1000.j, 2000+0.j, 3000+3000.j, 3000+2000.j, 3000+1000.j, 3000+0.j]])
+        xTaskCoords = [0,    0,    0,    0, 1000, 1000, 1000, 1000, 2000, 2000, 2000, 2000, 3000, 3000, 3000, 3000]
+        yTaskCoords = [3000, 2000, 1000, 0, 3000, 2000, 1000, 0   , 3000, 2000, 1000, 0   , 3000, 2000, 1000, 0]
 
     #10 "randomly" placed tasks (wide-area surveillance)
     if taskGeometry == 'random':        

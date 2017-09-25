@@ -4,30 +4,25 @@ import math
 
 import numpy as np
 import pandas as pd
+import xml.etree.ElementTree as ET
 from datetime import datetime
 import matplotlib
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import xml.etree.ElementTree as ET
 from matplotlib.ticker import MaxNLocator
 
-def calcLatency(visitOrder, taskSelectionMethod, normFactor):
+def calcLatency(visitOrder, priorityVector, normFactor):
     latencyStep = .01
     latencyStepDecimals = 2
 
+    numTasks = len(priorityVector)
+
     visitTimes = visitOrder[:, 2]
+    visitTimes = np.array(visitTimes, dtype=float)
     latencyTimeVector = np.arange(visitTimes[0], visitTimes[-1]+2*latencyStep, latencyStep)
 
     visitTimes = np.around(visitTimes, decimals=latencyStepDecimals)
     latencyTimeVector = np.around(latencyTimeVector, decimals=latencyStepDecimals)
-
-    uniqueTasks, uniqueTaskInd = np.unique(visitOrder[:,1], return_index=True)
-    numTasks = len(uniqueTasks)
-    priorityVector = []
-    for index in uniqueTaskInd:
-        priorityVector.append(visitOrder[index, 3])
-    priorityVector = np.array(priorityVector)
 
     individualLatencies = np.empty([latencyTimeVector.shape[0], numTasks])
     totalLatency = np.empty(latencyTimeVector.shape[0])
@@ -48,17 +43,16 @@ def calcLatency(visitOrder, taskSelectionMethod, normFactor):
                     for task in entry:
                         individualLatencies[timeIndex, int(task-1)] = 0                 
 
-    # if utilityFunction != 'Stanford':
     latencyTimeVector = np.multiply(latencyTimeVector, normFactor)
     individualLatencies = np.multiply(individualLatencies, normFactor)
     totalLatency = np.multiply(totalLatency, normFactor)
     maxLatency = totalLatency.max()
     avgLatency = totalLatency.mean()
 
-    return latencyTimeVector, individualLatencies, totalLatency, priorityVector, maxLatency, avgLatency
+    return latencyTimeVector, individualLatencies, totalLatency, maxLatency, avgLatency
 
 def plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, 
-                priorityVector, commMode, savePath, taskSelectionMethod, **kwargs):
+                priorityVector, commMode, savePath, taskSelectionMethod, vehicleIDs, normVehicles, cmapVehicles, **kwargs):
     
     if kwargs is not None:
         for key, value in kwargs.iteritems():
@@ -70,12 +64,6 @@ def plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, tot
                 w0 = value
             if key == 'w1':
                 w1 = value
-    
-    vehicleIDs = np.unique(visitOrder[:,0])
-
-    #Create a color map for the vehicles
-    normVehicles = matplotlib.colors.Normalize(vmin=vehicleIDs.min(), vmax=vehicleIDs.max())
-    cmapVehicles = matplotlib.cm.get_cmap('Spectral')
 
     #Create a color map for the tasks
     normTasks = matplotlib.colors.Normalize(vmin=0, vmax=(len(priorityVector)-1))
@@ -133,115 +121,61 @@ def plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, tot
     plt.savefig('{0}Trade{1}_{2}.png'.format(savePath, tradeID, taskSelectionMethod))
     plt.close()
 
-
-def plotDiscountFactorChart(betas, travelTimeMatrixNorm, savePath):
+def plotScenarioMap(taskVector, taskGeometry, savePath):
     
-    tij = np.linspace(0,1,21)
-    discountFactor = np.empty(tij.shape[0])    
-    
-    # plt.figure()
-    fig, ax1 = plt.subplots()
-    travelTimeMatrixNorm = np.tril(travelTimeMatrixNorm, k=0)
-    mask = np.nonzero(travelTimeMatrixNorm)    
-    ax1.hist(travelTimeMatrixNorm[mask],color='.5',normed=1, cumulative=1)#, 10, facecolor='green', alpha=0.75)
-    ax1.set_ylabel('Cumulative Distribution of tij')
-    ax1.axis([0,1,0,1])
+    labelScaling = (taskVector[:,2].max()-taskVector[:,2].min())*.025
 
-    
-    ax2 = ax1.twinx()
-    for beta in betas:
-        for stepIndex, step in enumerate(tij):
-            discountFactor[stepIndex] = math.exp(-beta*step)
-        # print discountFactor
-        ax2.plot(tij, 1-discountFactor, label='Beta={}'.format(beta) )
-    ax2.axis([0,1,0,1])
-    ax2.legend(loc='best')
-    ax2.set_ylabel('Discount Factor')
-    ax2.set_title('Utility Discount Factors by Beta')
-    ax1.set_xlabel('t_ij (normalized)')
-
-
-    fig.tight_layout()
-    fig.savefig('{0}DiscountFactors.png'.format(savePath))
-    # plt.show()
-    plt.close(fig)
-
-
-def plotScenarioMap(rawTaskCoords, taskGeometry, savePath, toFile):
-    #Argument toFile == 1, save the vaniall map drawing; toFile == 0, just return the figure without saving
-
-    x = np.real(rawTaskCoords)
-    y = np.imag(rawTaskCoords)
-    labelScaling = (y.max()-y.min())*.025
-
-    fig = plt.figure()
+    plt.figure()
     plt.margins(.1)
-    for taskIndex, task in enumerate(x[0, :]):
-        taskLabel = 'T[{0}]'.format(taskIndex+1)
-        plt.plot(x[0,taskIndex], y[0,taskIndex], color=[.5,.5,.5], linestyle=' ', marker='o', markersize=14)
-        plt.text(x[0,taskIndex], y[0,taskIndex]-labelScaling, taskLabel,
+    for task in taskVector:
+        ID = int(task[0])
+        x = task[1]
+        y = task[2]
+        pri = task[3]
+        taskLabel = 'T[{}]'.format(ID)
+        plt.plot(x,y, color=[.5,.5,.5], linestyle=' ', marker='o', markersize=14)
+        plt.text(x,y-labelScaling, taskLabel,
             color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=12, zorder=3)    
         
     plt.title('Task Configuration', fontsize=18)
-    plt.xlabel('East (m)', fontsize=14)
-    plt.ylabel('North (m)', fontsize=14)
+    plt.xlabel('East, (m)', fontsize=14)
+    plt.ylabel('North, (m)', fontsize=14)
+    plt.axes().set_aspect('equal')   
+    plt.savefig('{0}{1}_ScenarioMap.png'.format(savePath, taskGeometry))
+
+def plotTrajectories(savePath, tradeID, visitOrder, taskVector, vehicleIDs, normVehicles, cmapVehicles):
+
+    plt.figure()
+    plt.margins(.1)    
+    # Plot each trajectory
+    for index, trajectory in enumerate(visitOrder[len(vehicleIDs):, 3], len(vehicleIDs)):
+        x = []
+        y = []
+        veh = int(visitOrder[index, 0])
+        for step in trajectory:
+            x.append(step[0])
+            y.append(step[1])
+        plt.plot(x,y, color=cmapVehicles(normVehicles(veh)))
+        # plt.show()
+    # Overlay the tasks and their priorities
+    labelScaling = (taskVector[:,2].max()-taskVector[:,2].min())*.025
+    for task in taskVector:
+        ID = int(task[0])
+        x = task[1]
+        y = task[2]
+        pri = task[3]
+        taskLabel = 'T[{}]\np={}'.format(ID, pri)
+        plt.plot(x,y, color=[.5,.5,.5], linestyle=' ', marker='o', markersize=10)
+        plt.text(x,y-labelScaling, taskLabel,
+            color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=10, zorder=3)
+
+    plt.title('Vehcile Trajectories')
+    plt.xlabel('East, (m)', fontsize=14)
+    plt.ylabel('North, (m)', fontsize=14)
     plt.axes().set_aspect('equal')
-    
-    if toFile == 1:
-        plt.savefig('{0}{1}ScenarioMap.png'.format(savePath, taskGeometry))
-
-    return fig
-
-
-def plotBetaRings(rawTaskCoords, betas, taskGeometry, discountRadius, savePath):
-
-    x = np.real(rawTaskCoords)
-    y = np.imag(rawTaskCoords)
-    trueTravelTimeMatrixNorm = abs(rawTaskCoords.T-rawTaskCoords)
-    maxTravelTime = trueTravelTimeMatrixNorm.max()
-
-
-    for beta in betas:
-        if beta != 0:
-            radius = math.log(1-discountRadius)/(-beta)
-            if radius > 1:
-                print '        Beta={0} is too small to have a {1}% discount!'.format(beta, int(discountRadius*100))
-                break
-            radius = radius*maxTravelTime    #convert from normalized tij to true tij
-            fig = plotScenarioMap(rawTaskCoords, taskGeometry, savePath, 0)
-            ax = fig.gca() 
-            for taskIndex, task in enumerate(x[0,:]):
-                # if taskIndex in [0,3,6]:
-                circle = patches.Circle((x[0,taskIndex], y[0,taskIndex]), radius, fill=0, color='b', clip_on=0)
-                ax.add_artist(circle)
-            ax.set_title('{0}% Discount Rings for Beta={1}'.format(int(discountRadius*100),beta))
-            plt.savefig('{0}{1}withBeta{2}Rings.png'.format(savePath, taskGeometry, beta))
-            ax.cla()
-            plt.close(fig)
-
-
-def findPattern(visitOrder, noTasks, normFactor):
-
-    sequence = visitOrder[:,1]
-    sequenceTimes = visitOrder[:,2]
-    totalVisits = len(sequence)
-    sequence = sequence[totalVisits//2:totalVisits+1]
-    sequenceTimes = sequenceTimes[totalVisits//2:totalVisits+1]
-
-    max_length = len(sequence)//2
-    pattern = np.array([[0]])
-    patternLength = 0
-    patternCycle = 0
-    for x in range(noTasks, max_length):
-        if np.array_equal(sequence[0:x], sequence[x:2*x]):
-            pattern = sequence[0:x]
-            patternLength = len(pattern)
-            patternTimes = np.multiply(sequenceTimes[0:x], normFactor)
-            patternCycle = patternTimes[-1]-patternTimes[0]
-            break
-
-    return pattern, patternLength, patternCycle
-
+    plt.tight_layout()
+    plt.savefig('{0}Trade{1}_Trajectories.png'.format(savePath, tradeID))
+    plt.close()
 
 def main():
 
@@ -252,46 +186,76 @@ def main():
     dataFile = './Data/simData.xml'
 
     #Create directory to save the results to
-    savePath = './Data_Analysis_{}/'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))    
-    if not os.path.exists(savePath):
-        os.makedirs(savePath)
+    # savePath = './Data_Analysis_{}/'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
+    # if not os.path.exists(savePath):
+    #     os.makedirs(savePath)
+    savePath = './' 
+    performanceTable = []    
 
-    #Load data from XML file
+    #Load sim data from XML file
     e = ET.parse(dataFile).getroot()
+    
+    #Load data for each trade
     for trade in e.findall('Trade'):
         tradeID = int(trade.find('tradeID').text)
         print '***************************************'
-        print '   Loading TradeID={}'.format(tradeID)
+        print 'Loading TradeID={}'.format(tradeID)
         taskSelectionMethod = trade.find('taskSelectionMethod').text
-        print '      Task selection method:', taskSelectionMethod
+        print '   Task selection method:', taskSelectionMethod
+        saveTrajectories = int(float(trade.find('saveTrajectories').text))
+        print '   Save Trajectories?', bool(saveTrajectories)
         beta = float(trade.find('beta').text)
-        print '      Beta:', beta
+        print '   Beta:', beta
         w = eval(trade.find('w').text)
-        print '      w:', w
+        print '   w:', w
         normFactor = float(trade.find('normFactor').text)
-        print '      normFactor:', normFactor        
+        print '   normFactor:', normFactor        
         taskGeometry = trade.find('taskGeometry').text
-        print '      taskGeometry:', taskGeometry
+        print '   taskGeometry:', taskGeometry
         commMode = trade.find('commMode').text
-        print '      commMode:', commMode
+        print '   commMode:', commMode
+        
+        taskVector = []
+        for task in trade.findall('Tasks'):
+            taskID = int(float(task.find('Task').text))
+            taskxCoord = float(task.find('xCoord').text)
+            taskyCoord = float(task.find('yCoord').text)
+            taskPriority = int(float(task.find('Priority').text))
+            taskVector.append([taskID, taskxCoord, taskyCoord, taskPriority])
+        taskVector = np.array(taskVector)
+
         visitOrder = []
         for visit in trade.findall('Visit'):
             visitVeh = int(float(visit.find('Vehicle').text))
             visitTask = int(float(visit.find('Task').text))
             visitTime = float(visit.find('Time').text)
-            visitPri = float(visit.find('Priority').text)            
-            visitOrder.append([visitVeh, visitTask, visitTime, visitPri])
-        visitOrder = np.array(visitOrder)
-        print(visitOrder)
+            if saveTrajectories == True:
+                visitTrajectory = np.array(eval(visit.find('Trajectory').text))            
+                visitOrder.append([visitVeh, visitTask, visitTime, visitTrajectory])
+            elif saveTrajectories == False:
+                visitOrder.append([visitVeh, visitTask, visitTime])
+        visitOrder = np.array(visitOrder, dtype=object)    
 
-        print '        Performing Latency calculations...' 
-        latencyTimeVector, individualLatencies, totalLatency, priorityVector, maxLatency, avgLatency = calcLatency(visitOrder, taskSelectionMethod, normFactor)           
-        print '        Latency calculations complete!\n'
+        priorityVector = []
+        for task in taskVector:
+            priorityVector.append(task[3])            
+        priorityVector = np.array(priorityVector)
 
-        print '        Plotting latency and visit times...'
+        print ''
+        print '   Performing Latency calculations...' 
+        latencyTimeVector, individualLatencies, totalLatency, maxLatency, avgLatency = calcLatency(visitOrder, priorityVector, normFactor)           
+        print '   ...complete!\n'
+        
+        #Create a color map for the vehicles
+        vehicleIDs = np.unique(visitOrder[:,0]) 
+        normVehicles = matplotlib.colors.Normalize(vmin=vehicleIDs.min(), vmax=vehicleIDs.max())
+        cmapVehicles = matplotlib.cm.get_cmap('Spectral')
+
+        print '   Plotting latency and visit times...'
         if taskSelectionMethod == 'md2wrp':                    
             plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, 
-                priorityVector, commMode, savePath, taskSelectionMethod, beta=beta, w=w)
+                priorityVector, commMode, savePath, taskSelectionMethod, vehicleIDs, normVehicles, cmapVehicles, 
+                beta=beta, w=w)
     #         if utilityFunction == 'DLM':
     #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
     #                 priorityVector, commMode, savePath, utilityFunction)
@@ -301,44 +265,39 @@ def main():
     #         if utilityFunction == 'Stanford':                    
     #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
     #                 priorityVector, commMode, savePath, utilityFunction, w0=w0, w1=w1)
-        print '        Latency and visit times complete!\n'
-        print '        ************************************************'
+        print '   ...complete!\n'
+        
+
+        if saveTrajectories == True:
+            print '   Plotting trajectories...'
+            plotTrajectories(savePath, tradeID, visitOrder, taskVector, vehicleIDs, normVehicles, cmapVehicles)
+            print '   ...complete!\n'       
+        
+        performanceTable.append([tradeID, avgLatency, maxLatency, beta, w, commMode])
 
 
-    
-    # betas.sort(reverse=True)
+        print '************************************************'
 
-    # #Plot and save the scenario map  
-    # print ''
-    # print '    Plotting the scenario map...'                                
-    # plotScenarioMap(rawTaskCoords, taskGeometry, savePath, 1)
-    # print '    Map plotted!\n'
+    #Plot and save the scenario map  
+    print 'Plotting the scenario map...'                                
+    plotScenarioMap(taskVector, taskGeometry, savePath)
+    print '...complete!\n' 
+       
 
-    # # #Plot the scenario maps with beta rings
-    # # print '    Plotting the beta rings...'    
-    # # plotBetaRings(rawTaskCoords, betas, taskGeometry, discountRadius, savePath)    
-    # # print '    Beta rings plotted!\n'
+    #Print sorted performance to file
+    print 'Saving performance summary...'  
+    f = open('{}Summary_of_Performance'.format(savePath), 'w')
+    sys.stdout = f
+    performanceTablePD = pd.DataFrame(data=performanceTable, columns=['TradeID', 'L_bar', 'L_max', 'Beta', 'w', 'Cx Mode'])
+    # performanceTablePD.to_csv(savePath+'Summary_of_Performance', sep=',')
+    pd.set_option("display.max_rows",1000)
+    pd.set_option("display.max_colwidth",1000) 
+    print performanceTablePD.sort_values(by=['L_bar'])  
+    sys.stdout = sys.__stdout__
+    f.close()
+    print '...complete!\n'
 
-    # # #Plot the beta vs tij chart
-    # # print '    Plotting the discount factor chart...'    
-    # # plotDiscountFactorChart(betas, travelTimeMatrixNorm, savePath)
-    # # print '    Discount factor chart complete!'    
-
-    # #Print sorted performance to screen and to file
-    # #Sort the trades by performance, first by avg latency and then by max latency    
-    # tradeDataArchivePD = pd.DataFrame(data=tradeDataArchive, columns=['TradeID', 'L_bar', 'L_max', 'Beta', 'W_j', 'w0', 'w1', 'Pattern', 'Pattern Length', 'Cycle Time' , 'Util. Fx', 'Cx Mode', 'Start Tasks', 'Lookaheads','P_j', 'Task Geometry'])
-    # tradeDataArchivePD.to_pickle('{0}tradeDataArchive.pickle'.format(savePath))
-    # f = open('{}Summary_of_Performance'.format(savePath), 'w')
-    # sys.stdout = f    
-    # pd.set_option("display.max_rows",1000)
-    # pd.set_option("display.max_colwidth",1000)
-    # print tradeDataArchivePD.sort_values(by=['L_bar'])
-
-    # # print tradeDataArchivePD[['TradeID', 'L_bar', 'L_max', 'Beta', 'W_j', 'Pattern Length', 'Cycle Time' , 'Start Tasks']]
-    # f.close()
-
-    # sys.stdout = sys.__stdout__
-    # print '\nAnalysis complete!'
+    print 'ANALYSIS COMPLETE!'
     
 
 ################################################################################

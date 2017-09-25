@@ -9,7 +9,7 @@ import numpy as np
 
 from generateMapCoordinates import generateMapCoordinates
 
-def genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMeasures, taskStarts, commModes, 
+def genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMeasures, saveTrajectories, taskStarts, commModes, 
         initLocations, initHeadings, vehSpeed, vehBankAngle, taskGeometry, priorities, xTaskCoords, yTaskCoords, **kwargs):    
 
     betas = [[None]]
@@ -44,7 +44,7 @@ def genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMe
                                     configFile.write('\t<Trade>\n')
                                     configFile.write('\t\t<tradeID>{}</tradeID>\n'.format(tradeID))
                                     genScenarioConfig(configFile, taskSelectionMethod, taskSelectionDistanceMeasure,
-                                        taskStarts, commMode)
+                                        saveTrajectories, taskStarts, commMode)
                                     genVehicleConfig(configFile, initLocationsVector, initHeadingsVector, vehSpeed,
                                         vehBankAngle, taskSelectionMethod, beta, w, tour)
                                     genTaskConfig(configFile, taskGeometry, xTaskCoords, yTaskCoords, priorityVector)
@@ -99,13 +99,15 @@ def genTaskConfig(configFile, taskGeometry, xTaskCoords, yTaskCoords, priorities
 
     configFile.write('\t\t</Task_Info>\n')
 
-def genScenarioConfig(configFile, taskSelectionMethod, taskSelectionDistanceMeasure, taskStarts, commMode):
+def genScenarioConfig(configFile, taskSelectionMethod, taskSelectionDistanceMeasure, saveTrajectories, taskStarts, commMode):
 
     configFile.write('\t\t<Scenario_Parameters>\n')    
 
     configFile.write('\t\t\t<taskSelectionMethod name="'+taskSelectionMethod+'"> </taskSelectionMethod>\n')    
 
     configFile.write('\t\t\t<taskSelectionDistanceMeasure name="'+taskSelectionDistanceMeasure+'"> </taskSelectionDistanceMeasure>\n')
+
+    configFile.write('\t\t\t<saveTrajectories>{}</saveTrajectories>\n'.format(saveTrajectories))
 
     configFile.write('\t\t\t<taskStarts>{}</taskStarts>\n'.format(taskStarts))
 
@@ -122,7 +124,7 @@ def main():
 
     ### SCENARIO PARAMETERS ###
     #Specify a directory for the set of simulations (config files and results)
-    simPath = './Sims/development/'      
+    simPath = './Sims/isotri_dub_dub/'      
 
     #How will tasks be selected?
     taskSelectionMethod = 'md2wrp'
@@ -130,8 +132,12 @@ def main():
     
     #Will travel time be based on Euclidean or Dubins paths?
     taskSelectionDistanceMeasures = ['euclidean']
-    # taskSelectionDistanceMeasures = ['dubins']
+    taskSelectionDistanceMeasures = ['dubins']
     # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
+
+    #Save trajectories? (false, for speed)
+    saveTrajectories = 1     #true
+    saveTrajectories = 0   #false
 
     #How many decision to make? (i.e. no. of tasks to accomplish)
     taskStarts = 250
@@ -139,7 +145,7 @@ def main():
     #What type of communication to use?
     commModes = ['none']
     # commModes = ['CxBC']
-    commModes = ['CxBD']
+    # commModes = ['CxBD']
     # commModes = ['none', 'CxBD']    
     ###########################
 
@@ -147,28 +153,29 @@ def main():
     ### VEHICLES #####
     #Start Locations (task where each vehicle will start; length of this array is number of vehicles)
     initLocations = np.array([[1]])
-    initLocations = np.array([[1], [1]])
-    initLocations = np.array([[1], [1], [1]])
+    # initLocations = np.array([[1], [1]])
+    # initLocations = np.array([[1], [1], [1]])
     # initLocations = np.array([[1], [4], [8], [9]])
 
     #Initial Headings (degrees)
     initHeadings = np.array([[0]])
-    initHeadings = np.array([[0], [0]])
-    initHeadings = np.array([[0], [0], [0]])
+    # initHeadings = np.array([[0], [0]])
+    # initHeadings = np.array([[0], [0], [0]])
     # initHeadings = np.array([[0], [0], [0], [0]])
 
     #Vehicle speed (m/s)
     vehSpeed = 22
 
-    #Vehicle bank angle (assume always max turn)
-    vehBankAngle = 90
+    #Vehicle bank angle in degrees (assume always max turn)
+    vehBankAngle = 30
 
     #For 'md2wrp', specify beta and weights (this setup script currently assumes each vehicle has same parameters,
     #but sim can handle different betas and weights
     #...ignored if not using md2wrp
-    betas = np.arange(0,10.25, .25)
+    # betas = [3.9]
+    betas = np.arange(0, 10.5, .5)
     ws = np.array([[1], [1], [1]])
-    ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+    # ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
     #For 'manual', specify the tour (this setup script currently assumes each vehicle has same tour,
     #but sim can handle different tours
@@ -179,12 +186,15 @@ def main():
     
     ### TASKS ########
     taskGeometry = 'isotri'
+    # taskGeometry = 'circle'
     # taskGeometry = 'clusters'
-    taskGeometry = 'random'    
+    # taskGeometry = 'random' 
+    # taskGeometry = 'grid' 
+
     # taskGeometry = 'custom'
 
-    # priorities = np.array([[3], [2], [1]])
-    priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+    priorities = np.array([[1], [1], [1]])
+    # priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
     # for taskGeometry = 'custom'
     if taskGeometry == 'custom':
@@ -205,7 +215,7 @@ def main():
 
     tradeID = 1000  #initial trade ID number
 
-    genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMeasures, taskStarts, commModes, 
+    genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMeasures, saveTrajectories, taskStarts, commModes, 
         initLocations, initHeadings, vehSpeed, vehBankAngle, taskGeometry, priorities, xTaskCoords, yTaskCoords,
         betas=betas, ws=ws, tours=tours)
 
