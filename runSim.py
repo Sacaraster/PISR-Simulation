@@ -77,13 +77,13 @@ def loadVehicleConfig(trade, taskSelectionMethod):
         print '         Vehicle', vehicleID
         initLocation = int(vehicle.find('initLocation').text)
         print '            Initial Location: Task', initLocation
-        initHeading = float(vehicle.find('initHeading').text)
-        print '            Initial Heading:',initHeading, 'degrees.'
+        initHeading = float(vehicle.find('initHeading').text)*(math.pi/180)          #store in radians
+        print '            Initial Heading:',initHeading*(180/math.pi), 'degrees.'     #output in degrees
         vehSpeed = float(vehicle.find('vehSpeed').text)
         print '            Vehicle Speed:', vehSpeed
-        vehBankAngle = float(vehicle.find('vehBankAngle').text)
-        print '            Vehicle Bank Angle: ', vehBankAngle
-        turnRadius = vehSpeed**2/(9.807*math.tan(vehBankAngle*math.pi/180))
+        vehBankAngle = float(vehicle.find('vehBankAngle').text)*(math.pi/180)        #store in radians
+        print '            Vehicle Bank Angle: ', vehBankAngle*(180/math.pi)         #output in degrees
+        turnRadius = vehSpeed**2/(9.807*math.tan(vehBankAngle))
 
         if taskSelectionMethod == 'manual':
             tour = eval(vehicle.find('tour').text)
@@ -162,10 +162,13 @@ def main():
         longestDistance = calcLongestDistance(taskVector)
         print ''
         print '      Longest Euclidean distance between tasks: {}'.format(longestDistance)
+        print '      Vehicle turn radius: ', vehicleVector[0].turnRadius
 
         #Calculate normalizing factors for each vehicle (based on speed, so can be different per vehicle)
         for vehicle in vehicleVector:
-            vehicle.normFactor = longestDistance/vehicle.speed
+            vehicle.normFactor = longestDistance/vehicle.speed            
+            # vehicle.normFactor = 1     #<----Don't normalize
+
 
         ### Create arrays for storing data
 

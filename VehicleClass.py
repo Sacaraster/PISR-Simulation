@@ -45,20 +45,21 @@ class Vehicle:
         x0 = taskVector[int(self.location[0]-1)].location[0]
         y0 = taskVector[int(self.location[0]-1)].location[1]
         theta0 = self.heading
-        #For every candidate task...
-        #Discretized arrival headings (try each of these and pick the one with the shortest travel distance)
-        thetas = np.arange(0, 20, 1.25)*(math.pi/10)
-        for index, task, in enumerate(taskVector):
+        #For every candidate task...        
+        for index, task, in enumerate(taskVector):            
             pathLengthVector = []
             #Coordinates of candidate task
             x1 = task.location[0]
-            y1 = task.location[1]            
-            for theta1 in thetas:                                
+            y1 = task.location[1]
+            #Discretized arrival headings (try each of these and pick the one with the shortest travel distance)
+            thetas = np.arange(0, 20, 1.25)*(math.pi/10)
+            #If arriving at the current task at the current heading, slightly change arrival angle (prevents travel time of zero)
+            for thetaIndex, theta in enumerate(thetas):                
+                if (int(self.location[0]-1) == index) & (theta0==theta):
+                    thetas[thetaIndex] = theta0 + 0.0174533   #add 1 degree to arrivalangle
+            for theta1 in thetas:
                 #Cacluate the path length for given arrival angle
-                pathLength = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), self.turnRadius)               
-                #Don't allow arriving at the current task at the current heading, which would result in path length of '0'
-                if (int(self.location[0]-1) == index) & (theta0==theta1):
-                    pathLength = float('inf')
+                pathLength = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), self.turnRadius)
                 pathLengthVector.append(pathLength)
             #find the shortest travel distance for all arrival heading options
             dist = min(pathLengthVector)
@@ -88,7 +89,7 @@ class Vehicle:
         theta1 = headings[selectedTask-1]
         
         #calc dubins trajectory to destination
-        trajectory, _ = dubins.path_sample((x0, y0, theta0), (x1, y1, theta1), self.turnRadius, 1)
+        trajectory, _ = dubins.path_sample((x0, y0, theta0), (x1, y1, theta1), self.turnRadius, 20)
 
         return trajectory
 

@@ -1,16 +1,27 @@
+import math
 import numpy as np
 
 def generateMapCoordinates(taskGeometry):
 
+    #2 tasks 1000m apart
+    if taskGeometry == 'twopt_1000':
+        xTaskCoords = [0, 1000]
+        yTaskCoords = [0,    0]
+
+    #2 tasks 5000m apart
+    if taskGeometry == 'twopt_5000':
+        xTaskCoords = [0, 5000]
+        yTaskCoords = [0,    0]
+
     #3 tasks in an equilateral triangle
     if taskGeometry == 'eqtri':
-        xTaskCoords = [-250,  250, 0]
-        yTaskCoords = [-250, -250, 183]
+        xTaskCoords = [0,  250, 125]
+        yTaskCoords = [0,    0, 216.5]
 
     #3 tasks in an isosceles triangle
     if taskGeometry == 'isotri':
-        xTaskCoords = [-200, 200, 0]
-        yTaskCoords = [0,    0,   552]
+        xTaskCoords = [0, 250, 125]
+        yTaskCoords = [0,   0, 341.5]
 
     #10 tasks placed in a circle
     if taskGeometry == 'circle':        

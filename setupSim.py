@@ -124,7 +124,7 @@ def main():
 
     ### SCENARIO PARAMETERS ###
     #Specify a directory for the set of simulations (config files and results)
-    simPath = './Sims/isotri_dub_dub/'      
+    simPath = './Sims/Experiments/tune_by_EE/Random/4_Vehicle/DD/'      
 
     #How will tasks be selected?
     taskSelectionMethod = 'md2wrp'
@@ -140,12 +140,12 @@ def main():
     saveTrajectories = 0   #false
 
     #How many decision to make? (i.e. no. of tasks to accomplish)
-    taskStarts = 250
+    taskStarts = 725
 
     #What type of communication to use?
-    commModes = ['none']
+    # commModes = ['none']
     # commModes = ['CxBC']
-    # commModes = ['CxBD']
+    commModes = ['CxBD']
     # commModes = ['none', 'CxBD']    
     ###########################
 
@@ -153,15 +153,16 @@ def main():
     ### VEHICLES #####
     #Start Locations (task where each vehicle will start; length of this array is number of vehicles)
     initLocations = np.array([[1]])
-    # initLocations = np.array([[1], [1]])
-    # initLocations = np.array([[1], [1], [1]])
+    initLocations = np.array([[1], [1]])
+    initLocations = np.array([[1], [1], [1]])
+    initLocations = np.array([[1], [1], [1], [1]])
     # initLocations = np.array([[1], [4], [8], [9]])
 
     #Initial Headings (degrees)
     initHeadings = np.array([[0]])
-    # initHeadings = np.array([[0], [0]])
-    # initHeadings = np.array([[0], [0], [0]])
-    # initHeadings = np.array([[0], [0], [0], [0]])
+    initHeadings = np.array([[0], [0]])
+    initHeadings = np.array([[0], [0], [0]])
+    initHeadings = np.array([[0], [0], [0], [0]])
 
     #Vehicle speed (m/s)
     vehSpeed = 22
@@ -172,10 +173,13 @@ def main():
     #For 'md2wrp', specify beta and weights (this setup script currently assumes each vehicle has same parameters,
     #but sim can handle different betas and weights
     #...ignored if not using md2wrp
-    # betas = [3.9]
-    betas = np.arange(0, 10.5, .5)
-    ws = np.array([[1], [1], [1]])
-    # ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+    # betas = [.07, .075, .08, .085]
+    betas = [7.1]
+    # betas = np.arange(0, 10.1, .1)
+    # ws = np.array([[1], [1]])
+    # ws = np.array([[1], [1], [1]])
+    ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+    # ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
     #For 'manual', specify the tour (this setup script currently assumes each vehicle has same tour,
     #but sim can handle different tours
@@ -185,21 +189,26 @@ def main():
 
     
     ### TASKS ########
-    taskGeometry = 'isotri'
+    # taskGeometry = 'twopt_1000'
+    # taskGeometry = 'twopt_5000'
+    # taskGeometry = 'eqtri'  
+    # taskGeometry = 'isotri'    
     # taskGeometry = 'circle'
     # taskGeometry = 'clusters'
-    # taskGeometry = 'random' 
+    taskGeometry = 'random' 
     # taskGeometry = 'grid' 
 
     # taskGeometry = 'custom'
 
-    priorities = np.array([[1], [1], [1]])
-    # priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+    # priorities = np.array([[1], [1]])
+    # priorities = np.array([[1], [1], [1]])
+    priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+    # priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
     # for taskGeometry = 'custom'
     if taskGeometry == 'custom':
-        xTaskCoords = [-100, 100, 0]
-        yTaskCoords = [0,    0,   400]
+        xTaskCoords = [0, 1811]
+        yTaskCoords = [0,    0]
     ##################
     
 
@@ -225,7 +234,7 @@ def main():
     fileRun.write('#! /bin/bash\n')
     fileRun.write('rm -R ./Data\n')
     fileRun.write('mkdir {0}\n'.format('./Data'))
-    fileRun.write('python ../../runSim.py ./')
+    fileRun.write('python ../../../../../../runSim.py ./')
     os.chmod(runSimScript, 0777)
 
     #copy the analysis script that works with these results into the directory

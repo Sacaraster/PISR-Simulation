@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -84,7 +85,7 @@ def plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, tot
         axarr[0].legend(fontsize=9, ncol=2)
     if taskSelectionMethod == 'md2wrp':
         axarr[0].set_title('{}:'.format(taskSelectionMethod)
-            +r' $\beta$={}, '.format(beta)+r'$w_j$={0}'.format(weightVector)+'\n'+r'$p_j$={}'.format(priorityVector)+'\n'+
+            +r' $\beta$={}, '.format(beta)+r'$w$={0}'.format(weightVector)+'\n'+r'$p$={}'.format(priorityVector)+'\n'+
             r'$\bar L$={}'.format(np.around(totalLatency.mean(),decimals=2))+ r', $L_\max$={}'.format(np.around(totalLatency.max(), decimals=2)),
             fontsize=16)
     # if utilityFunction == 'DLM':
@@ -169,13 +170,43 @@ def plotTrajectories(savePath, tradeID, visitOrder, taskVector, vehicleIDs, norm
         plt.text(x,y-labelScaling, taskLabel,
             color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=10, zorder=3)
 
-    plt.title('Vehcile Trajectories')
+    plt.title('Vehicle Trajectories')
     plt.xlabel('East, (m)', fontsize=14)
     plt.ylabel('North, (m)', fontsize=14)
     plt.axes().set_aspect('equal')
     plt.tight_layout()
     plt.savefig('{0}Trade{1}_Trajectories.png'.format(savePath, tradeID))
     plt.close()
+
+def calcVisitsPerHour(savePath, visitRates, tradeID, visitOrder, normFactor):    
+
+    uniqueTasks = np.unique(visitOrder[:,1])
+    timeMax = visitOrder[-1,2]
+    runningTime = (timeMax*normFactor)/3600
+    # print visitOrder
+    for task in uniqueTasks:
+        numVisits = len(np.where(task==visitOrder[:,1])[0])
+        taskVisitRate = numVisits/runningTime
+        visitRates.append([tradeID,task,taskVisitRate])
+
+    return visitRates
+
+def plotVisitsPerHour(savePath, visitRates):
+
+    visitRatesPD = pd.DataFrame(data=visitRates, columns=['Trade ID','Task','Visit Rate'])
+    visitRatesPlotablePD = visitRatesPD.pivot(index='Trade ID', columns='Task', values='Visit Rate')
+
+    ax = visitRatesPlotablePD.plot(kind='bar', title='Mean Visit Rates')
+    ax.set_xticklabels(np.arange(0, 10.5, .5))
+    ax.grid(color='b', linestyle='-', linewidth=0.1)
+    # ax.set_xlabel('Trade ID') #, fontweight='bold', fontsize=28)
+    ax.set_xlabel(r'Distance Discount Parameter, $\beta$')
+    # ax.set_xlabel(r'Weight of Task 3, $w_3$') #, fontweight='bold', fontsize=28)
+    ax.set_ylabel('Mean Visit Rate (vph)') #, fontweight='bold', fontsize=28)
+    plt.tight_layout()
+    plt.savefig('{0}VisitsPerHour.png'.format(savePath))
+    plt.close()
+
 
 def main():
 
@@ -190,7 +221,8 @@ def main():
     # if not os.path.exists(savePath):
     #     os.makedirs(savePath)
     savePath = './' 
-    performanceTable = []    
+    performanceTable = [] 
+    visitRates = []   
 
     #Load sim data from XML file
     e = ET.parse(dataFile).getroot()
@@ -246,6 +278,9 @@ def main():
         latencyTimeVector, individualLatencies, totalLatency, maxLatency, avgLatency = calcLatency(visitOrder, priorityVector, normFactor)           
         print '   ...complete!\n'
         
+        #Calculate the visit rates for the trade and save for plotting at the end
+        visitRates = calcVisitsPerHour(savePath, visitRates, tradeID, visitOrder, normFactor)
+
         #Create a color map for the vehicles
         vehicleIDs = np.unique(visitOrder[:,0]) 
         normVehicles = matplotlib.colors.Normalize(vmin=vehicleIDs.min(), vmax=vehicleIDs.max())
@@ -273,10 +308,19 @@ def main():
             plotTrajectories(savePath, tradeID, visitOrder, taskVector, vehicleIDs, normVehicles, cmapVehicles)
             print '   ...complete!\n'       
         
-        performanceTable.append([tradeID, avgLatency, maxLatency, beta, w, commMode])
-
+        numVehicles = len(vehicleIDs)
+        performanceTable.append([tradeID, numVehicles, avgLatency, maxLatency, beta, w, commMode])
+      
 
         print '************************************************'
+
+    
+
+    #Plot and save the visit rates chart    
+    print 'Plotting visits per hour...'
+    plotVisitsPerHour(savePath, visitRates)
+    print '...complete!\n'
+
 
     #Plot and save the scenario map  
     print 'Plotting the scenario map...'                                
@@ -284,17 +328,19 @@ def main():
     print '...complete!\n' 
        
 
-    #Print sorted performance to file
+    #Print sorted performance to file and pickle it
     print 'Saving performance summary...'  
     f = open('{}Summary_of_Performance'.format(savePath), 'w')
     sys.stdout = f
-    performanceTablePD = pd.DataFrame(data=performanceTable, columns=['TradeID', 'L_bar', 'L_max', 'Beta', 'w', 'Cx Mode'])
-    # performanceTablePD.to_csv(savePath+'Summary_of_Performance', sep=',')
+    performanceTablePD = pd.DataFrame(data=performanceTable, columns=['TradeID', '# Veh', 'L_bar', 'L_max', 'Beta', 'w', 'Cx Mode'])
+    performanceTablePD.sort_values(by=['L_bar', 'L_max'], inplace=True) 
     pd.set_option("display.max_rows",1000)
     pd.set_option("display.max_colwidth",1000) 
-    print performanceTablePD.sort_values(by=['L_bar'])  
+    print performanceTablePD  
     sys.stdout = sys.__stdout__
     f.close()
+    performanceSummaryPickle = '{0}performanceSummaryPickle.pickle'.format(savePath)
+    pickle.dump(performanceTablePD, open(performanceSummaryPickle, "wb"))
     print '...complete!\n'
 
     print 'ANALYSIS COMPLETE!'
