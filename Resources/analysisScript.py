@@ -241,7 +241,9 @@ def main():
         w = eval(trade.find('w').text)
         print '   w:', w
         normFactor = float(trade.find('normFactor').text)
-        print '   normFactor:', normFactor        
+        print '   normFactor:', normFactor
+        rdRatio = float(trade.find('rdRatio').text)
+        print '   r/d:', rdRatio          
         taskGeometry = trade.find('taskGeometry').text
         print '   taskGeometry:', taskGeometry
         commMode = trade.find('commMode').text
@@ -278,61 +280,61 @@ def main():
         latencyTimeVector, individualLatencies, totalLatency, maxLatency, avgLatency = calcLatency(visitOrder, priorityVector, normFactor)           
         print '   ...complete!\n'
         
-        #Calculate the visit rates for the trade and save for plotting at the end
-        visitRates = calcVisitsPerHour(savePath, visitRates, tradeID, visitOrder, normFactor)
+        # #Calculate the visit rates for the trade and save for plotting at the end
+        # visitRates = calcVisitsPerHour(savePath, visitRates, tradeID, visitOrder, normFactor)
 
         #Create a color map for the vehicles
         vehicleIDs = np.unique(visitOrder[:,0]) 
         normVehicles = matplotlib.colors.Normalize(vmin=vehicleIDs.min(), vmax=vehicleIDs.max())
         cmapVehicles = matplotlib.cm.get_cmap('Spectral')
 
-        print '   Plotting latency and visit times...'
-        if taskSelectionMethod == 'md2wrp':                    
-            plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, 
-                priorityVector, commMode, savePath, taskSelectionMethod, vehicleIDs, normVehicles, cmapVehicles, 
-                beta=beta, w=w)
-    #         if utilityFunction == 'DLM':
-    #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
-    #                 priorityVector, commMode, savePath, utilityFunction)
-    #         if utilityFunction == 'TSP':
-    #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
-    #                 priorityVector, commMode, savePath, utilityFunction)
-    #         if utilityFunction == 'Stanford':                    
-    #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
-    #                 priorityVector, commMode, savePath, utilityFunction, w0=w0, w1=w1)
-        print '   ...complete!\n'
+    #     print '   Plotting latency and visit times...'
+    #     if taskSelectionMethod == 'md2wrp':                    
+    #         plotResults(tradeID, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, 
+    #             priorityVector, commMode, savePath, taskSelectionMethod, vehicleIDs, normVehicles, cmapVehicles, 
+    #             beta=beta, w=w)
+    # #         if utilityFunction == 'DLM':
+    # #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
+    # #                 priorityVector, commMode, savePath, utilityFunction)
+    # #         if utilityFunction == 'TSP':
+    # #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
+    # #                 priorityVector, commMode, savePath, utilityFunction)
+    # #         if utilityFunction == 'Stanford':                    
+    # #             plotResults(tradeID, vehicleIDs, latencyTimeVector, normFactor, individualLatencies, totalLatency, visitOrder, lookahead,
+    # #                 priorityVector, commMode, savePath, utilityFunction, w0=w0, w1=w1)
+    #     print '   ...complete!\n'
         
 
-        if saveTrajectories == True:
-            print '   Plotting trajectories...'
-            plotTrajectories(savePath, tradeID, visitOrder, taskVector, vehicleIDs, normVehicles, cmapVehicles)
-            print '   ...complete!\n'       
+        # if saveTrajectories == True:
+        #     print '   Plotting trajectories...'
+        #     plotTrajectories(savePath, tradeID, visitOrder, taskVector, vehicleIDs, normVehicles, cmapVehicles)
+        #     print '   ...complete!\n'       
         
         numVehicles = len(vehicleIDs)
-        performanceTable.append([tradeID, numVehicles, avgLatency, maxLatency, beta, w, commMode])
+        performanceTable.append([tradeID, numVehicles, avgLatency, maxLatency, beta, w, commMode, rdRatio])
       
 
         print '************************************************'
 
     
 
-    #Plot and save the visit rates chart    
-    print 'Plotting visits per hour...'
-    plotVisitsPerHour(savePath, visitRates)
-    print '...complete!\n'
+    # #Plot and save the visit rates chart    
+    # print 'Plotting visits per hour...'
+    # plotVisitsPerHour(savePath, visitRates)
+    # print '...complete!\n'
 
 
-    #Plot and save the scenario map  
-    print 'Plotting the scenario map...'                                
-    plotScenarioMap(taskVector, taskGeometry, savePath)
-    print '...complete!\n' 
+    # #Plot and save the scenario map  
+    # print 'Plotting the scenario map...'                                
+    # plotScenarioMap(taskVector, taskGeometry, savePath)
+    # print '...complete!\n' 
        
 
     #Print sorted performance to file and pickle it
     print 'Saving performance summary...'  
     f = open('{}Summary_of_Performance'.format(savePath), 'w')
     sys.stdout = f
-    performanceTablePD = pd.DataFrame(data=performanceTable, columns=['TradeID', '# Veh', 'L_bar', 'L_max', 'Beta', 'w', 'Cx Mode'])
+    performanceTablePD = pd.DataFrame(data=performanceTable, columns=['TradeID', '# Veh', 'L_bar', 'L_max', 'Beta', 'w', 'Cx Mode', 'r/d'])
     performanceTablePD.sort_values(by=['L_bar', 'L_max'], inplace=True) 
     pd.set_option("display.max_rows",1000)
     pd.set_option("display.max_colwidth",1000) 

@@ -104,19 +104,33 @@ def loadVehicleConfig(trade, taskSelectionMethod):
     return vehicleVector
 
 
-def calcLongestDistance(taskVector):
+def calcDistanceMatrixData(taskVector):
 
-    distVector = []
-    for fromTask in taskVector:
-        for toTask in taskVector:
-            dist = math.sqrt(math.pow(fromTask.location[0]-toTask.location[0], 2)+
-                math.pow(fromTask.location[1]-toTask.location[1], 2))
-            distVector.append(dist)
+    cxyVector = []
+    for task in taskVector:
+        x = task.location[0]
+        y = task.location[1]
+        cxy = x+y*1j
+        cxyVector.append(cxy)
+    cxyVector = np.array([cxyVector], dtype=complex)
 
-    distVector = np.array(distVector)
-    longestDistance = distVector.max()
+    distanceMatrix = abs(cxyVector.T-cxyVector)
 
-    return longestDistance
+    longestDistance = np.max(distanceMatrix)
+    avgDistance = np.sum(distanceMatrix)/((distanceMatrix.shape[0]**2)-distanceMatrix.shape[0])   #don't divide by diaganol entries, which are zero
+
+
+    # distVector = []
+    # for fromTask in taskVector:
+    #     for toTask in taskVector:
+    #         dist = math.sqrt(math.pow(fromTask.location[0]-toTask.location[0], 2)+
+    #             math.pow(fromTask.location[1]-toTask.location[1], 2))
+    #         distVector.append(dist)
+
+    # distVector = np.array(distVector)
+    # longestDistance = distVector.max()
+
+    return avgDistance, longestDistance
 
 def main():
 
@@ -159,10 +173,13 @@ def main():
         np.set_printoptions(threshold='nan')
 
         #Calculate longest Euclidean distance on the map (for normalization)
-        longestDistance = calcLongestDistance(taskVector)
+        avgDistance, longestDistance = calcDistanceMatrixData(taskVector)
         print ''
+        print '      Average value of distance matrix: {}'.format(avgDistance)
         print '      Longest Euclidean distance between tasks: {}'.format(longestDistance)
         print '      Vehicle turn radius: ', vehicleVector[0].turnRadius
+        rdRatio = vehicleVector[0].turnRadius/avgDistance
+        print '      r/d for scenario: {}'.format(rdRatio)
 
         #Calculate normalizing factors for each vehicle (based on speed, so can be different per vehicle)
         for vehicle in vehicleVector:
@@ -274,7 +291,8 @@ def main():
         dataFile.write('\t\t<saveTrajectories>{}</saveTrajectories>\n'.format(saveTrajectories))
         dataFile.write('\t\t<beta>{}</beta>\n'.format(vehicleVector[0].beta))
         dataFile.write('\t\t<w>{}</w>\n'.format(vehicleVector[0].w))
-        dataFile.write('\t\t<normFactor>{}</normFactor>\n'.format(vehicleVector[0].normFactor))        
+        dataFile.write('\t\t<normFactor>{}</normFactor>\n'.format(vehicleVector[0].normFactor))
+        dataFile.write('\t\t<rdRatio>{}</rdRatio>\n'.format(rdRatio))        
         dataFile.write('\t\t<commMode>{}</commMode>\n'.format(commMode))
         dataFile.write('\t\t<taskGeometry>{}</taskGeometry>\n'.format(taskGeometry))
         for task in taskVector:

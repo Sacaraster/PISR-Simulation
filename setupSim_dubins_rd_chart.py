@@ -120,127 +120,134 @@ def main():
 
     #############################################
     ########## Simulation Setup #################
-    #############################################    
+    ############################################# 
+    # scaleFactors = np.array([.45, .3, .25, .2, .15, 0.125, .115 , 0.1, .09, 0.075, .07, .06, .055, .05, .045, .04, .035])    
+    # scaleFactors = np.array([.03, .025, .02, .015, .01])
+    scaleFactors = np.arange(.5, 0, -.025)
+    for scaleFactor in scaleFactors:   
 
-    ### SCENARIO PARAMETERS ###
-    #Specify a directory for the set of simulations (config files and results)
-    simPath = './Sims/Dubins/1_Vehicle/DD/Random_sf1/'      
+        ### SCENARIO PARAMETERS ###
+        #Specify a directory for the set of simulations (config files and results)
+        simPath = './Sims/Dubins/Grid/1_Vehicle/DD/Grid_sf{}/'.format(scaleFactor)     
 
-    #How will tasks be selected?
-    taskSelectionMethod = 'md2wrp'
-    # taskSelectionMethod = 'manual'
-    
-    #Will travel time be based on Euclidean or Dubins paths?
-    taskSelectionDistanceMeasures = ['euclidean']
-    taskSelectionDistanceMeasures = ['dubins']
-    # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
+        #How will tasks be selected?
+        taskSelectionMethod = 'md2wrp'
+        # taskSelectionMethod = 'manual'
+        
+        #Will travel time be based on Euclidean or Dubins paths?
+        # taskSelectionDistanceMeasures = ['euclidean']
+        taskSelectionDistanceMeasures = ['dubins']
+        # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
 
-    #Save trajectories? (false, for speed)
-    saveTrajectories = 1     #true
-    saveTrajectories = 0   #false
+        #Save trajectories? (false, for speed)
+        saveTrajectories = 1     #true
+        # saveTrajectories = 0   #false
 
-    #How many decision to make? (i.e. no. of tasks to accomplish)
-    taskStarts = 175
+        #How many decision to make? (i.e. no. of tasks to accomplish)
+        taskStarts = 450
 
-    #What type of communication to use?
-    commModes = ['none']
-    # commModes = ['CxBC']
-    # commModes = ['CxBD']
-    # commModes = ['none', 'CxBD']    
-    ###########################
+        #What type of communication to use?
+        commModes = ['none']
+        # commModes = ['CxBC']
+        # commModes = ['CxBD']
+        # commModes = ['none', 'CxBD']    
+        ###########################
 
 
-    ### VEHICLES #####
-    #Start Locations (task where each vehicle will start; length of this array is number of vehicles)
-    initLocations = np.array([[1]])
-    # initLocations = np.array([[1], [1]])
-    # initLocations = np.array([[1], [1], [1]])
-    # initLocations = np.array([[1], [1], [1], [1]])
-    # initLocations = np.array([[1], [4], [8], [9]])
+        ### VEHICLES #####
+        #Start Locations (task where each vehicle will start; length of this array is number of vehicles)
+        initLocations = np.array([[1]])
+        # initLocations = np.array([[1], [1]])
+        # initLocations = np.array([[1], [1], [1]])
+        # initLocations = np.array([[1], [1], [1], [1]])
+        # initLocations = np.array([[1], [4], [8], [9]])
 
-    #Initial Headings (degrees)
-    initHeadings = np.array([[0]])
-    # initHeadings = np.array([[0], [0]])
-    # initHeadings = np.array([[0], [0], [0]])
-    # initHeadings = np.array([[0], [0], [0], [0]])
+        #Initial Headings (degrees)
+        initHeadings = np.array([[0]])
+        # initHeadings = np.array([[0], [0]])
+        # initHeadings = np.array([[0], [0], [0]])
+        # initHeadings = np.array([[0], [0], [0], [0]])
 
-    #Vehicle speed (m/s)
-    vehSpeed = 22
+        #Vehicle speed (m/s)
+        vehSpeed = 22
 
-    #Vehicle bank angle in degrees (assume always max turn)
-    vehBankAngle = 30
+        #Vehicle bank angle in degrees (assume always max turn)
+        vehBankAngle = 30
 
-    #For 'md2wrp', specify beta and weights (this setup script currently assumes each vehicle has same parameters,
-    #but sim can handle different betas and weights
-    #...ignored if not using md2wrp
-    # betas = [.07, .075, .08, .085]
-    betas = [8.0]
-    # betas = np.arange(0, 10.2, .2)
-    # ws = np.array([[1], [1]])
-    # ws = np.array([[1], [1], [1]])
-    ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
-    # ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+        #For 'md2wrp', specify beta and weights (this setup script currently assumes each vehicle has same parameters,
+        #but sim can handle different betas and weights
+        #...ignored if not using md2wrp
+        # betas = [.07, .075, .08, .085]
+        # betas = [1.2]
+        betas = np.arange(0, 10.2, .2)
+        # ws = np.array([[1], [1]])
+        # ws = np.array([[1], [1], [1]])
+        ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+        ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
-    #For 'manual', specify the tour (this setup script currently assumes each vehicle has same tour,
-    #but sim can handle different tours
-    #...ignored if not susing manual
-    tours = [[1,2,3,2], [1,2,3]]
-    ##################
+        #For 'manual', specify the tour (this setup script currently assumes each vehicle has same tour,
+        #but sim can handle different tours
+        #...ignored if not susing manual
+        tours = [[1,2,3,2], [1,2,3]]
+        ##################
 
-    
-    ### TASKS ########
-    # taskGeometry = 'twopt_1000'
-    # taskGeometry = 'twopt_5000'
-    # taskGeometry = 'eqtri'  
-    # taskGeometry = 'isotri'    
-    # taskGeometry = 'circle'
-    # taskGeometry = 'clusters'
-    taskGeometry = 'random'
-    # taskGeometry = 'random_scaled'
-    # taskGeometry = 'grid' 
+        
+        ### TASKS ########
+        # taskGeometry = 'twopt_1000'
+        # taskGeometry = 'twopt_5000'
+        # taskGeometry = 'eqtri'  
+        # taskGeometry = 'isotri'    
+        # taskGeometry = 'circle'
+        # taskGeometry = 'circle_scaled'
+        # taskGeometry = 'clusters'
+        # taskGeometry = 'clusters_scaled'
+        # taskGeometry = 'random'
+        # taskGeometry = 'random_scaled'
+        # taskGeometry = 'grid'
+        taskGeometry = 'grid_scaled' 
 
-    # taskGeometry = 'custom'
+        # taskGeometry = 'custom'
 
-    # priorities = np.array([[1], [1]])
-    # priorities = np.array([[1], [1], [1]])
-    priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
-    # priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+        # priorities = np.array([[1], [1]])
+        # priorities = np.array([[1], [1], [1]])
+        priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+        priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
-    # for taskGeometry = 'custom'
-    if taskGeometry == 'custom':
-        xTaskCoords = [0, 1811]
-        yTaskCoords = [0,    0]
-    ##################
-    
+        # for taskGeometry = 'custom'
+        if taskGeometry == 'custom':
+            xTaskCoords = [0, 1811]
+            yTaskCoords = [0,    0]
+        ##################
+        
 
-    #############################################
-    ########## End Setup ########################
-    #############################################
+        #############################################
+        ########## End Setup ########################
+        #############################################
 
-    if not os.path.exists(simPath):
-            os.makedirs(simPath)
+        if not os.path.exists(simPath):
+                os.makedirs(simPath)
 
-    if(taskGeometry != 'custom'):
-        xTaskCoords, yTaskCoords = generateMapCoordinates(taskGeometry, 1)
+        if(taskGeometry != 'custom'):
+            xTaskCoords, yTaskCoords = generateMapCoordinates(taskGeometry, scaleFactor)
 
-    tradeID = 1000  #initial trade ID number
+        tradeID = 1000  #initial trade ID number
 
-    genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMeasures, saveTrajectories, taskStarts, commModes, 
-        initLocations, initHeadings, vehSpeed, vehBankAngle, taskGeometry, priorities, xTaskCoords, yTaskCoords,
-        betas=betas, ws=ws, tours=tours)
+        genConfigFile(simPath, tradeID, taskSelectionMethod, taskSelectionDistanceMeasures, saveTrajectories, taskStarts, commModes, 
+            initLocations, initHeadings, vehSpeed, vehBankAngle, taskGeometry, priorities, xTaskCoords, yTaskCoords,
+            betas=betas, ws=ws, tours=tours)
 
-    #Create a bash script to run the simulation(s)
-    runSimScript = '{0}{1}'.format(simPath,'runTrades.sh')
-    fileRun = open(runSimScript,'w')
-    fileRun.write('#! /bin/bash\n')
-    fileRun.write('rm -R ./Data\n')
-    fileRun.write('mkdir {0}\n'.format('./Data'))
-    fileRun.write('python ../../../../../runSim.py ./')
-    os.chmod(runSimScript, 0777)
+        #Create a bash script to run the simulation(s)
+        runSimScript = '{0}{1}'.format(simPath,'runTrades.sh')
+        fileRun = open(runSimScript,'w')
+        fileRun.write('#! /bin/bash\n')
+        fileRun.write('rm -R ./Data\n')
+        fileRun.write('mkdir {0}\n'.format('./Data'))
+        fileRun.write('python ../../../../../../runSim.py ./')
+        os.chmod(runSimScript, 0777)
 
-    #copy the analysis script that works with these results into the directory
-    sourceFile = './Resources/analysisScript.py'
-    shutil.copy(sourceFile, simPath)  
+        #copy the analysis script that works with these results into the directory
+        sourceFile = './Resources/analysisScript.py'
+        shutil.copy(sourceFile, simPath)  
 
 
 if __name__ == '__main__':
