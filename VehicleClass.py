@@ -13,8 +13,8 @@ class Vehicle:
 
         self.ID = ID
         self._indexer = _indexer   #since IDs are usually 100, 200, etc, this makes vehicle index referencing easier
-        self.location = [initLoc, 0.0]   # [current_location, current_time]               
-        self.targets = np.zeros((numVehicles, 3))  # [task, time_of_arrival, travel_time_to_task]
+        self.location = [initLoc, 0.0]   # [current_task_location, current_time]               
+        self.targets = np.zeros((numVehicles, 3))  # table of what other vehicles are doing; [task, time_of_arrival, travel_time_to_task]
         self.targets[self._indexer, 0] = initLoc
         self.targets[self._indexer, 1] = 0.0
         self.targets[self._indexer, 2] = 0.0
@@ -100,7 +100,11 @@ class VehicleMD2WRP(Vehicle):
 
     def __init__(self, _indexer, ID, initLoc, initHead, speed, bankAngle, numVehicles, beta, w):
         Vehicle.__init__(self, _indexer, ID, initLoc, initHead, speed, bankAngle, numVehicles)
-        self.ageTracker = np.zeros(len(w))
+        # self.ageTracker = np.zeros(len(w))      #Start with zero age vector
+        self.ageTracker = np.array([ 0, 0.711, 0.806, 0.468, 2.359, 2.53, 2.013, 1.019, 1.708, 1.365])  #start with "periodic" age state
+        # self.ageTracker = np.random.rand(1,10)    #TEST non-zero AGE VECTOR
+        # self.ageTracker = self.ageTracker[0]
+        # self.ageTracker[0] = 0
         self.beta = beta
         self.w = w
 

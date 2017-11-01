@@ -165,6 +165,7 @@ def main():
     
         #Parse and load the vehicle configuration; returns a vector of vehicle objects
         vehicleVector = loadVehicleConfig(trade, taskSelectionMethod)
+        
     
     ######################################################################
     ######################################################################    
@@ -185,9 +186,6 @@ def main():
         for vehicle in vehicleVector:
             vehicle.normFactor = longestDistance/vehicle.speed            
             # vehicle.normFactor = 1     #<----Don't normalize
-
-
-        ### Create arrays for storing data
 
         ### MAIN SIM LOOP ###
         print ''

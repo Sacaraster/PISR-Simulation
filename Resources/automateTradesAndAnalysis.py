@@ -3,7 +3,7 @@ import os
 
 def main():
 
-    rootPath = '/home/chris/Research/PISR_Sim_NGplus/Sims/Dubins/Grid/1_Vehicle/DD/'
+    rootPath = '/home/chris/Research/PISR_Sim_NGplus/Sims/Dubins/Random/3_Vehicle/DD/'
 
     for root,dirs,files in os.walk(rootPath):        
         for file in files:

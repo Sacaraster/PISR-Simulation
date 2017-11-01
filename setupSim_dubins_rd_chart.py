@@ -120,22 +120,31 @@ def main():
 
     #############################################
     ########## Simulation Setup #################
-    ############################################# 
-    # scaleFactors = np.array([.45, .3, .25, .2, .15, 0.125, .115 , 0.1, .09, 0.075, .07, .06, .055, .05, .045, .04, .035])    
-    # scaleFactors = np.array([.03, .025, .02, .015, .01])
-    scaleFactors = np.arange(.5, 0, -.025)
+    #############################################
+
+    #Circle
+    # scaleFactors = np.array([.02 ,.015,.0125])   #1 Veh, add'l
+    # scaleFactors = np.array([.5, .4, .3, .2, .175, .15, .125, .1,  .09, .08, .07, .06, .05, .04, .02 , .015, .0125])   #3 Veh
+    #Random
+    # scaleFactors = np.array([.5, .3, .2, .15, .125, .1,  .09, .08, .07, .06, .055, .05, .045, .04, .035, .03, .025, .02, .0175])
+    scaleFactors = np.array([.02, .0175])  #3 veh, add'l
+    #Clusters
+    # scaleFactors = np.array([.5, .3, .2, .15, .125, .1,  .09, .08, .07, .06, .055, .05, .045, .04, .035, .03, .025, .02, .0175])
+    #Grid
+    # scaleFactors = np.array([.07, .06, .05, .04])   #1 Veh, add'l
+    # scaleFactors = np.array([.5, .4, .3, .2, .175, .15, .125, .1,  .09, .08, .07, .06, .05, .04])   #3 Veh
     for scaleFactor in scaleFactors:   
 
         ### SCENARIO PARAMETERS ###
         #Specify a directory for the set of simulations (config files and results)
-        simPath = './Sims/Dubins/Grid/1_Vehicle/DD/Grid_sf{}/'.format(scaleFactor)     
+        simPath = './Sims/Dubins/Random/3_Vehicle/DD/Random_sf{}/'.format(scaleFactor)     
 
         #How will tasks be selected?
         taskSelectionMethod = 'md2wrp'
         # taskSelectionMethod = 'manual'
         
         #Will travel time be based on Euclidean or Dubins paths?
-        # taskSelectionDistanceMeasures = ['euclidean']
+        taskSelectionDistanceMeasures = ['euclidean']
         taskSelectionDistanceMeasures = ['dubins']
         # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
 
@@ -144,12 +153,12 @@ def main():
         # saveTrajectories = 0   #false
 
         #How many decision to make? (i.e. no. of tasks to accomplish)
-        taskStarts = 450
+        taskStarts = 550
 
         #What type of communication to use?
         commModes = ['none']
         # commModes = ['CxBC']
-        # commModes = ['CxBD']
+        commModes = ['CxBD']
         # commModes = ['none', 'CxBD']    
         ###########################
 
@@ -158,14 +167,14 @@ def main():
         #Start Locations (task where each vehicle will start; length of this array is number of vehicles)
         initLocations = np.array([[1]])
         # initLocations = np.array([[1], [1]])
-        # initLocations = np.array([[1], [1], [1]])
+        initLocations = np.array([[1], [1], [1]])
         # initLocations = np.array([[1], [1], [1], [1]])
         # initLocations = np.array([[1], [4], [8], [9]])
 
         #Initial Headings (degrees)
         initHeadings = np.array([[0]])
         # initHeadings = np.array([[0], [0]])
-        # initHeadings = np.array([[0], [0], [0]])
+        initHeadings = np.array([[0], [0], [0]])
         # initHeadings = np.array([[0], [0], [0], [0]])
 
         #Vehicle speed (m/s)
@@ -183,7 +192,7 @@ def main():
         # ws = np.array([[1], [1]])
         # ws = np.array([[1], [1], [1]])
         ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
-        ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+        # ws = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
         #For 'manual', specify the tour (this setup script currently assumes each vehicle has same tour,
         #but sim can handle different tours
@@ -202,16 +211,16 @@ def main():
         # taskGeometry = 'clusters'
         # taskGeometry = 'clusters_scaled'
         # taskGeometry = 'random'
-        # taskGeometry = 'random_scaled'
+        taskGeometry = 'random_scaled'
         # taskGeometry = 'grid'
-        taskGeometry = 'grid_scaled' 
+        # taskGeometry = 'grid_scaled' 
 
         # taskGeometry = 'custom'
 
         # priorities = np.array([[1], [1]])
         # priorities = np.array([[1], [1], [1]])
         priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
-        priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
+        # priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
 
         # for taskGeometry = 'custom'
         if taskGeometry == 'custom':
@@ -229,6 +238,20 @@ def main():
 
         if(taskGeometry != 'custom'):
             xTaskCoords, yTaskCoords = generateMapCoordinates(taskGeometry, scaleFactor)
+
+        #r/D readout
+        cxyVector = []
+        for ind, task in enumerate(xTaskCoords):
+            x = xTaskCoords[ind]
+            y = yTaskCoords[ind]
+            cxy = x+y*1j
+            cxyVector.append(cxy)
+        cxyVector = np.array([cxyVector], dtype=complex)
+        D = abs(cxyVector.T-cxyVector)
+        dbar = np.sum(D)/((D.shape[0]**2)-D.shape[0])   #don't divide by diaganol entries, which are zero
+
+        print scaleFactor, ', ', 85/dbar
+        
 
         tradeID = 1000  #initial trade ID number
 

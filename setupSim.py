@@ -124,7 +124,7 @@ def main():
 
     ### SCENARIO PARAMETERS ###
     #Specify a directory for the set of simulations (config files and results)
-    simPath = './Sims/Dubins/1_Vehicle/DD/Random_sf1/'      
+    simPath = './Sims/aTr/'      
 
     #How will tasks be selected?
     taskSelectionMethod = 'md2wrp'
@@ -132,15 +132,15 @@ def main():
     
     #Will travel time be based on Euclidean or Dubins paths?
     taskSelectionDistanceMeasures = ['euclidean']
-    taskSelectionDistanceMeasures = ['dubins']
+    # taskSelectionDistanceMeasures = ['dubins']
     # taskSelectionDistanceMeasures = ['euclidean', 'dubins']
 
     #Save trajectories? (false, for speed)
-    saveTrajectories = 1     #true
+    # saveTrajectories = 1     #true
     saveTrajectories = 0   #false
 
     #How many decision to make? (i.e. no. of tasks to accomplish)
-    taskStarts = 175
+    taskStarts = 250
 
     #What type of communication to use?
     commModes = ['none']
@@ -168,13 +168,13 @@ def main():
     vehSpeed = 22
 
     #Vehicle bank angle in degrees (assume always max turn)
-    vehBankAngle = 30
+    vehBankAngle = 90
 
     #For 'md2wrp', specify beta and weights (this setup script currently assumes each vehicle has same parameters,
     #but sim can handle different betas and weights
     #...ignored if not using md2wrp
     # betas = [.07, .075, .08, .085]
-    betas = [8.0]
+    betas = [4.0]
     # betas = np.arange(0, 10.2, .2)
     # ws = np.array([[1], [1]])
     # ws = np.array([[1], [1], [1]])
@@ -235,7 +235,7 @@ def main():
     fileRun.write('#! /bin/bash\n')
     fileRun.write('rm -R ./Data\n')
     fileRun.write('mkdir {0}\n'.format('./Data'))
-    fileRun.write('python ../../../../../runSim.py ./')
+    fileRun.write('python ../../runSim.py ./')
     os.chmod(runSimScript, 0777)
 
     #copy the analysis script that works with these results into the directory
