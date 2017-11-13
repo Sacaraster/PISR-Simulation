@@ -10,13 +10,14 @@ import numpy as np
 from generateMapCoordinates import generateMapCoordinates
 
 def genconfig_file(sim_path, tradeID, sim_length, task_geometry, priorities, init_ages, task_activation_times, 
-        task_termination_times, init_locations, init_headings, veh_speed, veh_bank_angle, veh_activation_times, veh_termination_times, 
+        task_termination_times, init_locations, init_headings, veh_speeds, veh_bank_angles, veh_activation_times, veh_termination_times, 
         routing_data, pathing_data, comm_modes, database_items):    
 
     
     #Declare empty iterable arrays
     betas = [None]
     ws_vector_array = [None]
+    distance_measure = [None]
     tours_vector_array = [None]
 
     #Create combination vectors
@@ -28,9 +29,12 @@ def genconfig_file(sim_path, tradeID, sim_length, task_geometry, priorities, ini
     task_termination_times_vector_array = np.array(list(itertools.product(*task_termination_times)))
     init_locations_vector_array = np.array(list(itertools.product(*init_locations)))
     init_headings_vector_array = np.array(list(itertools.product(*init_headings)))
+    veh_speeds_vector_array = np.array(list(itertools.product(*veh_speeds)))
+    veh_bank_angles_vector_array = np.array(list(itertools.product(*veh_bank_angles)))
     if routing_data[0] == 'MD2WRP':
         betas = routing_data[1]
         ws_vector_array = np.array(list(itertools.product(*routing_data[2])))
+        distance_measure = routing_data[3]        
     if routing_data[0] == 'Manual':
         tours_vector_array = np.array(list(itertools.product(*routing_data[1])))
 
@@ -45,25 +49,28 @@ def genconfig_file(sim_path, tradeID, sim_length, task_geometry, priorities, ini
                 for task_termination_times_vector in task_termination_times_vector_array:
                     for init_locations_vector in init_locations_vector_array:
                         for init_headings_vector in init_headings_vector_array:
-                            for beta in betas:
-                                for ws_vector in ws_vector_array:
-                                    for tours_vector in tours_vector_array:
-                                        for pathing_type in pathing_data:
-                                            for comm_mode in comm_modes:
-                                                config_file.write('\t<Trade>\n')                                             
-                                                config_file.write('\t\t<tradeID>{}</tradeID>\n'.format(tradeID))
-                                                config_file.write('\t\t<sim_length_visits>{}</sim_length_visits>\n'.format(sim_length[0]))
-                                                config_file.write('\t\t<sim_length_time>{}</sim_length_time>\n'.format(sim_length[1]))
-                                                genTaskConfig(config_file, task_geometry, priorities_vector, init_ages_vector, 
-                                                    task_activation_times_vector, task_termination_times_vector)
-                                                genVehicleConfig(config_file, init_locations_vector, init_headings_vector, veh_speed, veh_bank_angle, 
-                                                    veh_activation_times, veh_termination_times)
-                                                genRoutingConfig(config_file, routing_data[0], beta, ws_vector, tours_vector)
-                                                genPathingConfig(config_file, pathing_type)
-                                                genCommConfig(config_file, comm_mode)
-                                                genDatabaseConfig(config_file, database_items)
-                                                config_file.write('\t</Trade>\n')
-                                                tradeID += 1
+                            for veh_speeds_vector in veh_speeds_vector_array:
+                                for veh_bank_angles_vector in veh_bank_angles_vector_array:    
+                                    for beta in betas:
+                                        for ws_vector in ws_vector_array:
+                                            for tours_vector in tours_vector_array:
+                                                for pathing_type in pathing_data:
+                                                    for comm_mode in comm_modes:
+                                                        config_file.write('\t<Trade>\n')                                             
+                                                        
+                                                        config_file.write('\t\t<tradeID>{}</tradeID>\n'.format(tradeID))
+                                                        config_file.write('\t\t<sim_length_visits>{}</sim_length_visits>\n'.format(sim_length[0]))
+                                                        config_file.write('\t\t<sim_length_time>{}</sim_length_time>\n'.format(sim_length[1]))
+                                                        
+                                                        genTaskConfig(config_file, task_geometry, priorities_vector, init_ages_vector, 
+                                                            task_activation_times_vector, task_termination_times_vector)
+                                                                                                        
+                                                        genVehicleConfig(config_file, init_locations_vector, init_headings_vector, veh_speeds_vector, veh_bank_angles_vector, 
+                                                            veh_activation_times, veh_termination_times, routing_data[0], beta, ws_vector, distance_measure, tours_vector,
+                                                            pathing_type, comm_mode, database_items) 
+                                                        
+                                                        config_file.write('\t</Trade>\n')
+                                                        tradeID += 1
 
 
 
@@ -90,10 +97,13 @@ def genTaskConfig(config_file, task_geometry, priorities_vector, init_ages_vecto
         config_file.write('\t\t\t\t<task_t_activate>{}</task_t_activate>\n'.format(task_activation_times_vector[index]))
         config_file.write('\t\t\t\t<task_t_terminate>{}</task_t_terminate>\n'.format(task_termination_times_vector[index]))
         config_file.write('\t\t\t</Task>\n')
-    config_file.write('\t\t</Task_Info>\n') 
 
-def genVehicleConfig(config_file, init_locations_vector, init_headings_vector, veh_speed, veh_bank_angle, 
-    veh_activation_times, veh_termination_times):    
+    config_file.write('\t\t</Task_Info>\n')
+     
+
+def genVehicleConfig(config_file, init_locations_vector, init_headings_vector, veh_speeds_vector, veh_bank_angles_vector,
+    veh_activation_times, veh_termination_times, routing_type, beta, ws_vector, distance_measure, tours_vector,
+    pathing_type, comm_mode, database_items): 
 
     config_file.write('\t\t<Vehicle_Info>\n')
 
@@ -103,41 +113,47 @@ def genVehicleConfig(config_file, init_locations_vector, init_headings_vector, v
         config_file.write('\t\t\t\t<ID>{}</ID>\n'.format(vehicleID))
         config_file.write('\t\t\t\t<init_location>{}</init_location>\n'.format(init_locations_vector[index]))
         config_file.write('\t\t\t\t<init_heading>{}</init_heading>\n'.format(init_headings_vector[index]))
-        config_file.write('\t\t\t\t<veh_speed>{}</veh_speed>\n'.format(veh_speed))
-        config_file.write('\t\t\t\t<veh_bank_angle>{}</veh_bank_angle>\n'.format(veh_bank_angle))
+        config_file.write('\t\t\t\t<veh_speed>{}</veh_speed>\n'.format(veh_speeds_vector[index]))
+        config_file.write('\t\t\t\t<veh_bank_angle>{}</veh_bank_angle>\n'.format(veh_bank_angles_vector[index]))
         config_file.write('\t\t\t\t<veh_t_activate>{}</veh_t_activate>\n'.format(veh_activation_times[index]))
         config_file.write('\t\t\t\t<veh_t_terminate>{}</veh_t_terminate>\n'.format(veh_termination_times[index]))         
+        genRoutingConfig(config_file, routing_type, beta, ws_vector, distance_measure, tours_vector)
+        genPathingConfig(config_file, pathing_type)
+        genCommConfig(config_file, comm_mode)
+        genDatabaseConfig(config_file, database_items) 
         config_file.write('\t\t\t</Vehicle>\n') 
-    config_file.write('\t\t</Vehicle_Info>\n')
 
-def genRoutingConfig(config_file, routing_type, beta, ws_vector, tours_vector):
+    config_file.write('\t\t</Vehicle_Info>\n')    
 
-    config_file.write('\t\t<Routing_Info>\n')
-    config_file.write('\t\t\t<routing_type>{}</routing_type>\n'.format(routing_type))
+def genRoutingConfig(config_file, routing_type, beta, ws_vector, distance_measure, tours_vector):
+
+    config_file.write('\t\t\t\t<Routing_Info>\n')
+    config_file.write('\t\t\t\t\t<routing_type>{}</routing_type>\n'.format(routing_type))
     if routing_type == 'MD2WRP':
-        config_file.write('\t\t\t<beta>{}</beta>\n'.format(beta))
-        config_file.write('\t\t\t<w>{}</w>\n'.format(np.array2string(ws_vector, separator=', ')))
+        config_file.write('\t\t\t\t\t<beta>{}</beta>\n'.format(beta))
+        config_file.write('\t\t\t\t\t<w>{}</w>\n'.format(np.array2string(ws_vector, separator=', ')))
+        config_file.write('\t\t\t\t\t<distance_measure>{}</distance_measure>\n'.format(distance_measure))
     if routing_type == 'Manual':
-        config_file.write('\t\t\t<tour>{}</tour>\n'.format(np.array2string(tours_vector, separator=', ')))    
-    config_file.write('\t\t</Routing_Info>\n')
+        config_file.write('\t\t\t\t\t<tour>{}</tour>\n'.format(np.array2string(tours_vector, separator=', ')))    
+    config_file.write('\t\t\t\t</Routing_Info>\n')
 
 def genPathingConfig(config_file, pathing_type):
 
-    config_file.write('\t\t<Pathing_Info>\n')
-    config_file.write('\t\t\t<pathing_type>{}</pathing_type>\n'.format(pathing_type))        
-    config_file.write('\t\t</Pathing_Info>\n')
+    config_file.write('\t\t\t\t<Pathing_Info>\n')
+    config_file.write('\t\t\t\t\t<pathing_type>{}</pathing_type>\n'.format(pathing_type))        
+    config_file.write('\t\t\t\t</Pathing_Info>\n')
 
 def genCommConfig(config_file, comm_mode):
 
-    config_file.write('\t\t<Comm_Info>\n')
-    config_file.write('\t\t\t<comm_mode>{}</comm_mode>\n'.format(comm_mode))        
-    config_file.write('\t\t</Comm_Info>\n')
+    config_file.write('\t\t\t\t<Comm_Info>\n')
+    config_file.write('\t\t\t\t\t<comm_mode>{}</comm_mode>\n'.format(comm_mode))        
+    config_file.write('\t\t\t\t</Comm_Info>\n')
 
 def genDatabaseConfig(config_file, database_items):
-    config_file.write('\t\t<Database_Info>\n')
+    config_file.write('\t\t\t\t<Database_Info>\n')
     for database_item in database_items:
-        config_file.write('\t\t\t<{0}>{0}</{0}>\n'.format(database_item))        
-    config_file.write('\t\t</Database_Info>\n')
+        config_file.write('\t\t\t\t\t<{0}>{0}</{0}>\n'.format(database_item))        
+    config_file.write('\t\t\t\t</Database_Info>\n')
 
 
 def main():
@@ -159,8 +175,8 @@ def main():
 
     #How long to run the sim - [# tasks, time in sec]
     #Whichever condition occurs first will terminate the simulation
-    sim_length = [250, float('inf')]
-    # sim_length = [float('inf'), 20000]
+    sim_length = [50, float('inf')]
+    # sim_length = [float('inf'), 250]
 
     ####################################################################################
     ####################################################################################    
@@ -174,7 +190,7 @@ def main():
     # create multiple trades. (Careful, many combinations can add up!)
 
     #Load a task geometry defined in "generateMapCoordinates.py"
-    task_geometry = 'random'
+    task_geometry = 'isotri'
 
     #Assign a priority to each task.
     priorities = np.array([[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]])
@@ -185,11 +201,11 @@ def main():
 
     #Assign activation times (in sec) for each task (when the task becomes eligible
     #for selection)
-    task_activation_times = np.array([[0], [0], [0], [0], [0], [0], [0], [0], [0], [0]])
+    task_activation_times = np.array([[0], [0], [200], [0], [0], [0], [0], [0], [0], [0]])
 
     #Assign termination times (in sec) for each task (When the task becomes ineligible
     #for selection)
-    task_termination_times = np.array([[float('inf')], [float('inf')], [float('inf')], [float('inf')], [float('inf')], 
+    task_termination_times = np.array([[float('inf')], [float('inf')], [400], [float('inf')], [float('inf')], 
         [float('inf')], [float('inf')], [float('inf')], [float('inf')], [float('inf')]])
     
     ####################################################################################
@@ -201,29 +217,31 @@ def main():
     #################################################################################### 
     # These define aspects of the physical vehicle (e.g. speed). Parameters related to
     # other functions (e.g. pathing) are defined separately by their respective modules
+    # Note: length of init_locations array determines # of vehicles, all other arrays
+    #       may be longer...only the required elements will be used
 
     #Starting task locations (length of this array determines # of vehicles)
-    init_locations = np.array([[1], [1], [1]])
+    init_locations = np.array([[1], [1]])#, [1]])
 
     #Initial headings of each vehicle (in degrees)
-    init_headings = np.array([[0], [0], [0]])
+    init_headings = np.array([[0], [0], [0], [0], [0]])
 
     #Speed of each vehicle (in meters/sec)
-    #(This version of the setup script assumes all vehicles have the same)
-    veh_speed = 22
+    veh_speeds = np.array([[22], [22], [22], [22], [22]])
 
     #Max bank angle of each vehicle (in degrees). Assume every turn at max angle.
     #90 deg bank angle implies Euclidean travel.
-    #(This version of the setup script assumes all vehicles use the same bank angle)
-    veh_bank_angle = 30
+    veh_bank_angles = np.array([[30], [30], [30], [30], [30]])
+    # veh_bank_angles = np.array([[90], [90], [90], [90], [90]])
 
     #Assign activation times (in sec) for each vehicle (when the vehicle becomes eligible
     #to accomplish tasks)
-    veh_activation_times = np.array([0, 0, 0])
+    veh_activation_times = np.array([0, 300, 0, 0, 0])
 
     #Assign activation times (in sec) for each vehicle (when the vehicle becomes ineligible
     #to accomplish tasks)
-    veh_termination_times = np.array([float('inf'), float('inf'), float('inf')])
+    veh_termination_times = np.array([float('inf'), 500, float('inf'), float('inf'),
+        float('inf')])
 
     ####################################################################################
     ####################################################################################  
@@ -238,7 +256,8 @@ def main():
     #(This version of the setup script assumes all vehicles have the same)
     
     #MD2WRP format: ['MD2WRP', [Beta_1,Beta_2,Beta_3], [[w_1], [w_2], [w_3]], 'distance_measure']
-    routing_data = ['MD2WRP', [0, 4], [[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]], 'Euclidean']
+    #distance_measure == (1 for Euclidean), (2 for Dubins), (3 for Tripath)
+    routing_data = ['MD2WRP', [5.0], [[1], [1], [1], [1], [1], [1], [1], [1], [1], [1]], 2]
     
     #Manual format: ['Manual', [[stop_1],[stop_2], [stop_3]] ]
     # routing_data = ['Manual', [[1], [2], [3], [4], [5], [6], [7], [8], [9], [10]]]
@@ -273,10 +292,9 @@ def main():
     # 'Destination' = vehicles share destination and completion information.
 
     #Specify a communication type.
-    # comm_modes = ['none']
+    # comm_modes = ['None']
     # comm_modes = ['Completion']
-    comm_modes = ['Destination']
-    # comm_modes = ['none', 'Destination']    
+    comm_modes = ['Destination']  
 
     ####################################################################################
     ####################################################################################
@@ -307,7 +325,7 @@ def main():
     tradeID = 1000  #initial trade ID number
 
     genconfig_file(sim_path, tradeID, sim_length, task_geometry, priorities, init_ages, task_activation_times, 
-        task_termination_times, init_locations, init_headings, veh_speed, veh_bank_angle, veh_activation_times, veh_termination_times, 
+        task_termination_times, init_locations, init_headings, veh_speeds, veh_bank_angles, veh_activation_times, veh_termination_times, 
         routing_data, pathing_data, comm_modes, database_items)
 
     #Create a bash script to run the simulation(s)
