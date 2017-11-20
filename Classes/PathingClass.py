@@ -1,3 +1,5 @@
+import os
+import subprocess
 import math
 import dubins
 import numpy as np
@@ -17,29 +19,73 @@ class Pathing(object):
     def get_best_paths(self):
         raise NotImplementedError("You must implement a get_best_paths method for every Pathing type!")
 
+    @abstractmethod
+    def print_pathing_data(self):
+        raise NotImplementedError("You must implement a print_pathing_data method for every Pathing type!")
+
 class Euclidean_Pathing(Pathing):
 
     def __init__(self):
-        self.trajectory = [] 
+        self.type = 'Euclidean'
+        self.trajectory = []
 
-    def get_path(self):
-        #Will need to pass in a vehicle object when called, for current location        
-        return "Straight line distance between current location and target task"
-        # def calctraveleuc(self, taskVector):
-#         travelTimes = []
-#         for index, task in enumerate(taskVector):
-#             dist = math.sqrt(math.pow(task.location[0]-taskVector[int(self.location[0])-1].location[0], 2)+
-#                 math.pow(task.location[1]-taskVector[int(self.location[0])-1].location[1], 2))
-#             time = dist/self.speed
-#             time = time/self.normFactor
-#             travelTimes.append(time)
+    def print_pathing_data(self):
+        print '            Type:', self.type
 
-#         travelTimes = np.array(travelTimes)
+    def get_path(self, vehicle):
+        
+        x0 = vehicle.location.location[0]
+        y0 = vehicle.location.location[1]
 
-#         return travelTimes
+        x1 = vehicle.routing.destination.location[0]
+        y1 = vehicle.routing.destination.location[1]
+
+        #Calculate length of Euclidean path
+        path_length = math.sqrt(math.pow(x1-x0, 2)+math.pow(y1-y0, 2))
+        #Calculate trajectory
+        trajectory = np.array([[x0, y0], [x1, y1]])
+
+        #update vehicle states
+        self.trajectory = trajectory        
+        vehicle.routing.arrival_time = vehicle.time + path_length/vehicle.speed
+        vehicle.heading = 0
+
+        print '      Travel time to Task {} = {}'.format(vehicle.routing.destination.ID, path_length/vehicle.speed)
+        print '      Arriving @ {} secs.'.format(np.around(vehicle.routing.arrival_time, 3))
+        print '      Arrival heading: {} degrees'.format(np.around(vehicle.heading*(180/math.pi),1))
 
     def get_best_paths(self, vehicle, task_vector):
-        return "Straight line distance between current location and all other Tasks."
+
+        times_and_headings = []
+
+        x0 = vehicle.location.location[0]
+        y0 = vehicle.location.location[1]
+
+        #For every candidate task...        
+        for index, task in enumerate(task_vector): 
+            
+            #Coordinates of candidate task
+            x1 = task.location[0]
+            y1 = task.location[1]            
+
+            #Calculate the distance between the current location and candidate task
+            dist = math.sqrt(math.pow(x1-x0, 2)+math.pow(y1-y0, 2))
+
+            #Convert distance to travel time
+            time = dist/vehicle.speed
+            
+            #Save the travel time to each task
+            times_and_headings.append([task.ID, time, 0])
+
+        times_and_headings = np.array(times_and_headings)
+
+        print '      Shortest measured times to each task:'
+        print ''
+        print times_and_headings[:,0:2]
+        print ''
+
+        return times_and_headings
+
 
     def calcDistanceMatrixData(self, task_vector):
         cxyVector = []
@@ -60,9 +106,13 @@ class Euclidean_Pathing(Pathing):
 class Dubins_Pathing(Pathing):
 
     def __init__(self):
+        self.type = 'Dubins'
         self.trajectory = []
 
-    def get_path(self, vehicle, arrival_heading):
+    def print_pathing_data(self):
+        print '            Type:', self.type
+
+    def get_path(self, vehicle):
 
         x0 = vehicle.location.location[0]
         y0 = vehicle.location.location[1]
@@ -70,17 +120,35 @@ class Dubins_Pathing(Pathing):
 
         x1 = vehicle.routing.destination.location[0]
         y1 = vehicle.routing.destination.location[1]
-        theta1 = arrival_heading
 
-        #Calculate length of dubins path
-        path_length = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), vehicle.turn_radius)
+        path_length_vector = []
+        #Discretized arrival headings (try each of these and pick the one with the shortest travel distance)
+        thetas = np.arange(0, 20, 1.25)*(math.pi/10)
+        #If arriving at the current task at the current heading, slightly change arrival angle (prevents travel time of zero)
+        for theta_index, theta in enumerate(thetas):                
+            if (int(vehicle.location.ID-1) == vehicle.routing.destination.ID) & (theta0==theta):
+                thetas[theta_index] = theta0 + 0.0174533   #add 1 degree to arrivalangle
+        for theta1 in thetas:
+            #Cacluate the path length for given arrival angle
+            path_length = dubins.path_length((x0, y0, theta0), (x1, y1, theta1), vehicle.turn_radius)
+            path_length_vector.append(path_length)
+
+        #find the shortest travel distance for all calculated arrival heading options
+        min_dist = min(path_length_vector)
+        min_dist_index = np.argmin(path_length_vector)
+        arrival_heading = thetas[min_dist_index]
+        
         #Calculate trajectory to destination
-        trajectory, _ = dubins.path_sample((x0, y0, theta0), (x1, y1, theta1), vehicle.turn_radius, 20)
+        trajectory, _ = dubins.path_sample((x0, y0, theta0), (x1, y1, arrival_heading), vehicle.turn_radius, 20)
 
         #update vehicle states
         self.trajectory = trajectory        
-        vehicle.routing.arrival_time = vehicle.time + path_length/vehicle.speed
+        vehicle.routing.arrival_time = vehicle.time + min_dist/vehicle.speed
         vehicle.heading = arrival_heading
+
+        print '      Travel time to Task {} = {}'.format(vehicle.routing.destination.ID, min_dist/vehicle.speed)
+        print '      Arriving @ {} secs.'.format(np.around(vehicle.routing.arrival_time, 3))
+        print '      Arrival heading: {} degrees'.format(np.around(vehicle.heading*(180/math.pi),1))
 
     def get_best_paths(self, vehicle, task_vector):
         
@@ -90,6 +158,7 @@ class Dubins_Pathing(Pathing):
         x0 = vehicle.location.location[0]
         y0 = vehicle.location.location[1]
         theta0 = vehicle.heading
+
         #For every candidate task...        
         for index, task in enumerate(task_vector):            
             path_length_vector = []
@@ -116,20 +185,100 @@ class Dubins_Pathing(Pathing):
 
         times_and_headings = np.array(times_and_headings)
 
+        print '      Shortest measured times to each task:'
+        print ''
+        print times_and_headings[:,0:2]
+        print ''
+
         return times_and_headings
 
 
 class Tripath_Pathing(Pathing):
 
-    def __init__(self):
-        self.trajectory = [] 
+    def __init__(self, task_geometry, nfz):
+        self.type = 'Tripath'
+        self.map = task_geometry   #tells Tripath which map is in use
+        self.nfz = nfz             #tells Tripath which no-fly zone to use (an integer)
+        self.trajectory = []
 
-    def get_path(self, vehicle, task_vector):
-        #Will need to pass in a vehicle object when called, for current location  
-        print "Call the Tripath program to return locally optimal paths from current location to destination."
+    def print_pathing_data(self):
+        print '            Type:', self.type
+        print '            Map:', self.map
+
+    def get_path(self, vehicle):
+
+        x0 = vehicle.location.location[0]
+        y0 = vehicle.location.location[1]
+
+        x1 = vehicle.routing.destination.location[0]
+        y1 = vehicle.routing.destination.location[1]
+
+        #Cacluate the path to the task
+        FNULL = open(os.devnull, 'w')   #This prevents a terminal window from popping up each time Tripath is called
+        subprocess.call('../../Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, vehicle.pathing.map, vehicle.pathing.nfz),
+            cwd='../../Tripath_custom/bin/', stdout=FNULL, shell=True)
+        path_data = np.genfromtxt('../../Tripath_custom/bin/path.txt', delimiter = ",")  #path_data is the trajectory data
+        xPath = path_data[:,0]
+        yPath = path_data[:,1]
+
+        #Calculate the length of the path
+        path_length = 0
+        for ind, entry in enumerate(xPath[0:-1]):
+            path_length = path_length + math.sqrt(math.pow(xPath[ind+1]-xPath[ind], 2)+math.pow(yPath[ind+1]-yPath[ind], 2)) 
+
+        #update vehicle states
+        self.trajectory = path_data        
+        vehicle.routing.arrival_time = vehicle.time + path_length/vehicle.speed
+        vehicle.heading = 0
+
+        print '      Travel time to Task {} = {}'.format(vehicle.routing.destination.ID, path_length/vehicle.speed)
+        print '      Arriving @ {} secs.'.format(np.around(vehicle.routing.arrival_time, 3))
+        print '      Arrival heading: {} degrees'.format(np.around(vehicle.heading*(180/math.pi),1))
+
 
     def get_best_paths(self, vehicle, task_vector):
-        print "Call the Tripath program to return locally optimal paths from current location to all other tasks."
+
+        times_and_headings = []  #note...Euclidean, so heading is always '0'
+
+        #Coordinates of current location
+        x0 = vehicle.location.location[0]
+        y0 = vehicle.location.location[1]
+
+        #For every candidate task...        
+        for index, task in enumerate(task_vector): 
+            
+            #Coordinates of candidate task
+            x1 = task.location[0]
+            y1 = task.location[1]
+
+            #Cacluate the path to the task
+            FNULL = open(os.devnull, 'w')   #This prevents a terminal window from popping up each time Tripath is called
+            subprocess.call('../../Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, vehicle.pathing.map, vehicle.pathing.nfz),
+                cwd='../../Tripath_custom/bin/', stdout=FNULL, shell=True)
+            path_data = np.genfromtxt('../../Tripath_custom/bin/path.txt', delimiter = ",")
+            xPath = path_data[:,0]
+            yPath = path_data[:,1]
+
+            #Calculate the length of the path
+            dist = 0
+            for ind, entry in enumerate(xPath[0:-1]):
+                dist = dist + math.sqrt(math.pow(xPath[ind+1]-xPath[ind], 2)+math.pow(yPath[ind+1]-yPath[ind], 2))
+
+            #Convert distance to travel time
+            time = dist/vehicle.speed
+            
+            #Save the travel time to each task
+            times_and_headings.append([task.ID, time, 0])
+
+        times_and_headings = np.array(times_and_headings)
+
+        print '      Shortest measured times to each task:'
+        print ''
+        print times_and_headings[:,0:2]
+        print ''
+
+        return times_and_headings
+
 
 class PathingFactory:
     def get_pathing_module(self, pathing_data):
@@ -137,7 +286,7 @@ class PathingFactory:
             return Euclidean_Pathing()
         elif pathing_data[0] == 'Dubins':
             return Dubins_Pathing()
-        elif pathing_data[0] == 'Tripath':
-            return Tripath_Pathing()
+        elif pathing_data[0] == 'Tripath':            
+            return Tripath_Pathing(pathing_data[1], pathing_data[2])
         else:
             raise NotImplementedError("Unknown pathing type.")

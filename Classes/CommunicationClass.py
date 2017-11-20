@@ -14,7 +14,7 @@ class Communication(object):
 class No_Communication(Communication):
 
     def __init__(self):        
-        pass
+        self.type = 'None'
 
     def talk(self, decider, vehicle_vector):
         pass
@@ -22,7 +22,7 @@ class No_Communication(Communication):
 class Completion_Communication(Communication):
 
     def __init__(self):        
-        pass
+        self.type = 'Completion'
 
     def talk(self, decider, vehicle_vector):
         for vehicle in vehicle_vector:            
@@ -30,11 +30,13 @@ class Completion_Communication(Communication):
                 #Update sister vehicle age tracker's to account for the task just serviced by this vehicle
                 #(This is how old the task will now be when the sister vehicle makes its next decision)
                 vehicle.database.age_tracker[int(decider.location.ID-1)] = vehicle.routing.arrival_time-decider.time
+                print ''
+                print '      Broadcasted completion of Task {} @ {} secs.'.format(decider.location.ID, decider.time)
 
 class Destination_Communication(Communication):
 
     def __init__(self):        
-        pass
+        self.type = 'Destination'
 
     def talk(self, decider, vehicle_vector):
         for vehicle in vehicle_vector:            
@@ -45,6 +47,10 @@ class Destination_Communication(Communication):
                 #Let the sister vehicles know which task this vehicle has just selected and what time it will arrive
                 vehicle.database.vehicle_tracker[decider._indexer, 0] = decider.routing.destination.ID
                 vehicle.database.vehicle_tracker[decider._indexer, 1] = decider.routing.arrival_time
+        
+        print ''
+        print '      Broadcasted completion of Task {} @ {} secs.'.format(decider.location.ID, decider.time)
+        print '      Broadcasted destination as Task {} @ {} secs.'.format(decider.routing.destination.ID, decider.routing.arrival_time)
 
 class CommunicationFactory:
     def get_comm_module(self, comm_data):
