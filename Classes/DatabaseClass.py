@@ -12,6 +12,8 @@ class Database:
                 #     age_vector.append(task.age)
                 # age_vector = np.array(age_vector)
                 self.age_tracker = np.zeros(len(task_vector))
+                for task in task_vector:
+                    self.age_tracker[task.ID-1] = task.age
             elif entry == 'Vehicle_Tracker':
                 self.vehicle_tracker = np.zeros((len(vehicle_vector), 2))  # format: [destination_task, arrival_time]
 

@@ -199,11 +199,15 @@ class Tripath_Pathing(Pathing):
         self.type = 'Tripath'
         self.map = task_geometry   #tells Tripath which map is in use
         self.nfz = nfz             #tells Tripath which no-fly zone to use (an integer)
-        self.trajectory = []
+        self.trajectory = []        
+        self.nfz_impact = 0      #ratio of average travel distance with nfz to w/out nfz
+        
 
     def print_pathing_data(self):
         print '            Type:', self.type
         print '            Map:', self.map
+        print '            NFZ:', self.nfz
+        print '            NFZ Impact Rating:', self.nfz_impact 
 
     def get_path(self, vehicle):
 
@@ -215,9 +219,9 @@ class Tripath_Pathing(Pathing):
 
         #Cacluate the path to the task
         FNULL = open(os.devnull, 'w')   #This prevents a terminal window from popping up each time Tripath is called
-        subprocess.call('../../Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, vehicle.pathing.map, vehicle.pathing.nfz),
-            cwd='../../Tripath_custom/bin/', stdout=FNULL, shell=True)
-        path_data = np.genfromtxt('../../Tripath_custom/bin/path.txt', delimiter = ",")  #path_data is the trajectory data
+        subprocess.call('/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, vehicle.pathing.map, vehicle.pathing.nfz),
+            cwd='/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/', stdout=FNULL, shell=True)
+        path_data = np.genfromtxt('/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/path.txt', delimiter = ",")  #path_data is the trajectory data
         xPath = path_data[:,0]
         yPath = path_data[:,1]
 
@@ -253,9 +257,9 @@ class Tripath_Pathing(Pathing):
 
             #Cacluate the path to the task
             FNULL = open(os.devnull, 'w')   #This prevents a terminal window from popping up each time Tripath is called
-            subprocess.call('../../Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, vehicle.pathing.map, vehicle.pathing.nfz),
-                cwd='../../Tripath_custom/bin/', stdout=FNULL, shell=True)
-            path_data = np.genfromtxt('../../Tripath_custom/bin/path.txt', delimiter = ",")
+            subprocess.call('/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, vehicle.pathing.map, vehicle.pathing.nfz),
+                cwd='/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/', stdout=FNULL, shell=True)
+            path_data = np.genfromtxt('/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/path.txt', delimiter = ",")
             xPath = path_data[:,0]
             yPath = path_data[:,1]
 
@@ -278,6 +282,49 @@ class Tripath_Pathing(Pathing):
         print ''
 
         return times_and_headings
+
+    def calc_nfz_impact_rating(self, pathing_data, task_vector):
+        #First, calculate the average distance between all tasks without the NFZ (Euclidean distances)
+        cxyVector = []
+        for task in task_vector:
+            x = task.location[0]
+            y = task.location[1]
+            cxy = x+y*1j
+            cxyVector.append(cxy)
+        cxyVector = np.array([cxyVector], dtype=complex)
+        distanceMatrix = abs(cxyVector.T-cxyVector)
+        D_without_nfz = np.sum(distanceMatrix)/((distanceMatrix.shape[0]**2)-distanceMatrix.shape[0])   #don't divide by diaganol entries, which are zero
+
+        #Second, calculate the average distance between all tasks taking into account the NFZ (Use Tripath)
+        D_array = []
+        for start_task in task_vector:  #for every task...
+            for end_task in task_vector:  #to every task...
+                #Coordinates of starting task
+                x0 = start_task.location[0]
+                y0 = start_task.location[1]
+
+                #Coordinate of destination task
+                x1 = end_task.location[0]
+                y1 = end_task.location[1]
+
+                #Caclulate distance between start and end task
+                FNULL = open(os.devnull, 'w')   #This prevents a terminal window from popping up each time Tripath is called
+                # subprocess.call('../../Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, pathing_data[1], pathing_data[2]),
+                #     cwd='../../Tripath_custom/bin/', stdout=FNULL, shell=True)
+                subprocess.call('/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/./setut {} {} {} {} {} {}'.format(x0, y0, x1, y1, pathing_data[1], pathing_data[2]),
+                    cwd='/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/', stdout=FNULL, shell=True)
+                path_data = np.genfromtxt('/home/chris/Research/PISR_Sim_NGpp/Tripath_custom/bin/path.txt', delimiter = ",")
+                xPath = path_data[:,0]
+                yPath = path_data[:,1]
+                dist = 0
+                for ind, entry in enumerate(xPath[0:-1]):
+                    dist = dist + math.sqrt(math.pow(xPath[ind+1]-xPath[ind], 2)+math.pow(yPath[ind+1]-yPath[ind], 2))
+                D_array.append(dist)
+        D_array = np.array(D_array)        
+        D_with_nfz = np.sum(D_array)/(D_array.shape[0]-len(task_vector))   #don't divide by the zero entries of task x to task x
+        
+        #calculate nfz impact rating and save
+        self.nfz_impact = D_with_nfz/D_without_nfz
 
 
 class PathingFactory:

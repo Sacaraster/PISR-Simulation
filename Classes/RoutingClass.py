@@ -103,7 +103,7 @@ class Manual_Routing(Routing):
         self.destination = vehicle.location   # destination task (a task object)
         self.arrival_time = vehicle.time  
         self.current_stop = veh_start_index_vector[vehicle._indexer]   #not a task, but the index in the sequence 
-        self.sequence_vector = seq_vector
+        self.sequence_vector = seq_vector[vehicle._indexer]
 
     def print_routing_data(self):
         print '            Type:', self.type
