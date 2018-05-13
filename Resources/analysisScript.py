@@ -19,11 +19,11 @@ def calcLatency(task_ages, task_vector, num_vehicles):
     #extract the time steps
     latency_t_vector = task_ages[:,0]
 
-    indiv_latencies = task_ages[:,1:11]
+    indiv_latencies = task_ages[:,1:len(task_vector)+1]
     for task in task_vector:
         indiv_latencies[:, task.ID-1] = indiv_latencies[:, task.ID-1]*task.priority
     
-    total_latency = np.sum(task_ages[:,1:11], 1)
+    total_latency = np.sum(indiv_latencies, 1)
     
     max_latency = total_latency.max()
     avg_latency = total_latency[int(num_vehicles*2)-1::].mean()   #this disregards multiple zeros at the beginning
@@ -135,12 +135,19 @@ def plotTrajectories(save_path, tradeID, visit_order, task_vector, vehicle_vecto
         plt.plot(task.location[0],task.location[1], color=[.5,.5,.5], linestyle=' ', marker='o', markersize=14)
         plt.text(task.location[0],task.location[1]-label_scaling, taskLabel,
             color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=12, zorder=3)
+    vehicleLegendEntries = []
+    for vehicle in vehicle_vector:
+        vehicleLegendEntries.append(mlines.Line2D([], [], color=cmapVehicles(normVehicles(int(vehicle.ID))),
+            label='Vehicle[{}]'.format(int(vehicle.ID))))
+    plt.legend(handles=[i for i in vehicleLegendEntries], fontsize=9)
 
     # Overlay the no-fly zones (if they exist)
     for vehicle in vehicle_vector:
-        if vehicle.pathing.nfz:
+        try:
             nfz_xcoords, nfz_ycoords = getNFZcoords(task_geometry, vehicle.pathing.nfz)
             plt.plot(nfz_xcoords, nfz_ycoords, '-', color='gray')
+        except:
+            pass
 
     plt.title('Vehicle Trajectories')
     plt.xlabel('East, (m)', fontsize=14)
@@ -154,13 +161,47 @@ def getNFZcoords(task_geometry, nfz):
 
     if task_geometry == 'random':
         if nfz == 1:
-            nfz_xcoords = [0, 0, 500, 500, 0]
-            nfz_ycoords = [-2000, 4000, 4000, -2000, -2000]
+            nfz_xcoords = [-500, 500, 500, -500, -500]
+            nfz_ycoords = [2000, 2000, -2000, -2000, 2000]
+        if nfz == 11:
+            nfz_xcoords = [-500, 500, 500, -500, -500]
+            nfz_ycoords = [7000, 7000, -7000, -7000, 7000]
 
     if task_geometry == 'clusters':
+        # if nfz == 1:
+        #     nfz_xcoords = [-2500, 4000, 4000, -2500, -2500]
+        #     nfz_ycoords = [0, 0, -1000, -1000, 0]
         if nfz == 1:
-            nfz_xcoords = [0, 4000, 4000, 0, 0]
-            nfz_ycoords = [0, 0, -1000, -1000, 0]
+            nfz_xcoords = [0, 1000, 1000, 0, 0]
+            nfz_ycoords = [4000, 4000, -4000, -4000, 4000]
+        if nfz == 2:
+            nfz_xcoords = [0, 1000, 1000, 0, 0]
+            nfz_ycoords = [5000, 5000, -5000, -5000, 5000]
+        if nfz == 3:
+            nfz_xcoords = [0, 1000, 1000, 0, 0]
+            nfz_ycoords = [6000, 6000, -6000, -6000, 6000]
+        if nfz == 4:
+            nfz_xcoords = [0, 1000, 1000, 0, 0]
+            nfz_ycoords = [7000, 7000, -7000, -7000, 7000]
+        if nfz == 5:
+            nfz_xcoords = [0, 1000, 1000, 0, 0]
+            nfz_ycoords = [8000, 8000, -8000, -8000, 8000]
+        if nfz == 14:
+            nfz_xcoords = [5000, 5000, 1000, 1000, 5000]
+            nfz_ycoords = [0, -1000, -1000, 0, 0]
+
+    if task_geometry == 'grid':
+        if nfz == 1:
+            nfz_xcoords = [2250, 2750, 2750, 2250, 2250]
+            nfz_ycoords = [3000, 3000, 0, 0, 3000]
+        if nfz == 11:
+            nfz_xcoords = [-500, 500, 500, -500, -500]
+            nfz_ycoords = [7000, 7000, -7000, -7000, 7000]
+
+    if task_geometry == 'circle':
+        if nfz == 13:
+            nfz_xcoords = [2200, 3200, 3200, 2200, 2200]
+            nfz_ycoords = [10000, 10000, -10000, -10000, 10000]
 
     return nfz_xcoords, nfz_ycoords
 
@@ -214,6 +255,7 @@ def main():
     #Open every pickle file (one for each trade) and unpack it
     for file in os.listdir(data_file):
         if file.endswith("_Results.pickle"):
+        # if (file.endswith("1001_Results.pickle") or file.endswith("1017_Results.pickle") or file.endswith("1000_Results.pickle")):
             trade_results_pickle = '{0}{1}'.format(data_file, file)
             print '************************************************'
             print 'Opening \"', trade_results_pickle, '\"\n'
@@ -246,7 +288,7 @@ def main():
                 vehicleIDs.append(vehicle.ID)
             vehicleIDs = np.array(vehicleIDs)
             normVehicles = matplotlib.colors.Normalize(vmin=vehicleIDs.min(), vmax=vehicleIDs.max())
-            cmapVehicles = matplotlib.cm.get_cmap('Spectral')
+            cmapVehicles = matplotlib.cm.get_cmap('Dark2')
 
             print '   Plotting latency and visit times...'                            
             plotResults(tradeID, task_vector, vehicle_vector, latency_t_vector, indiv_latencies, total_latency, max_latency, avg_latency, visit_order,
@@ -256,15 +298,41 @@ def main():
             print '   Plotting trajectories...'
             plotTrajectories(save_path, tradeID, visit_order, task_vector, vehicle_vector, task_geometry, normVehicles, cmapVehicles)
             print '   ...complete!\n'
+            
+            try:
+                nfz_impact = vehicle_vector[0].pathing.nfz_impact
+            except:
+                nfz_impact = 1.0
 
-            if vehicle_vector[0].routing.type == 'MD2WRP':
+            #Calculate the longest revisit time to task 1 (base)
+            #Calculate the longest revisit time to task 1 (base)
+            visits_to_base = []            
+            for visit in visit_order:
+                if visit[1] == 1:
+                    visits_to_base.append(visit[2])
+            revisit_times = []
+            max_revisit_to_base = []
+            avg_revisit_to_base = []
+            std_revisit_to_base = []
+            min_revisit_to_base = []
+            try:
+                visits_to_base = np.array(visits_to_base)
+                revisit_times = np.diff(visits_to_base)
+                max_revisit_to_base = np.max(revisit_times)
+                avg_revisit_to_base = np.mean(revisit_times)
+                std_revisit_to_base = np.std(revisit_times)
+                min_revisit_to_base = np.min(revisit_times)
+            except:
+                pass
+            
+            if vehicle_vector[0].routing.type == 'MD2WRP':                
                 performance_table.append([tradeID, len(vehicle_vector), avg_latency, max_latency,
                     vehicle_vector[0].routing.type, vehicle_vector[0].routing.beta, vehicle_vector[0].routing.w, 'N/A',
-                    vehicle_vector[0].comm.type])
+                    nfz_impact, vehicle_vector[0].comm.type, max_revisit_to_base, min_revisit_to_base, avg_revisit_to_base, std_revisit_to_base])
             if vehicle_vector[0].routing.type == 'Manual':
                 performance_table.append([tradeID, len(vehicle_vector), avg_latency, max_latency,
                     vehicle_vector[0].routing.type, 'N/A', 'N/A', vehicle_vector[0].routing.sequence_vector,
-                    vehicle_vector[0].comm.type])
+                    nfz_impact, vehicle_vector[0].comm.type, max_revisit_to_base, min_revisit_to_base, avg_revisit_to_base, std_revisit_to_base])
 
 
     #Plot and save the scenario map  
@@ -282,7 +350,7 @@ def main():
     print 'Saving performance summary...'  
     f = open('{}Summary_of_Performance'.format(save_path), 'w')
     sys.stdout = f
-    performance_tablePD = pd.DataFrame(data=performance_table, columns=['TradeID', '# Veh', 'L_bar', 'L_max', 'Routing Type', 'Beta', 'w', 'Sequence' ,'Cx Mode'])
+    performance_tablePD = pd.DataFrame(data=performance_table, columns=['TradeID', '# Veh', 'L_bar', 'L_max', 'Routing Type', 'Beta', 'w', 'Sequence' ,'NFZ Impact', 'Cx Mode', 'Max RTB', 'Min RTB', 'Avg RTB', 'Std RTB'])
     performance_tablePD.sort_values(by=['L_bar', 'L_max'], inplace=True) 
     pd.set_option("display.max_rows",1000)
     pd.set_option("display.max_colwidth",1000) 
