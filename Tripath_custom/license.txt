@@ -1,0 +1,37 @@
+
+   ===============================================================
+                  Graphsim Tripath Toolkit License
+   ===============================================================
+
+
+/*************************************************************************\
+  Copyright 2010 Marcelo Kallmann. All Rights Reserved.
+
+  Permission to use, copy, modify and distribute this software and its
+  documentation for educational, research and non-profit purposes, without
+  fee, and without a written agreement is hereby granted, provided that
+  the above copyright notice and the following three paragraphs appear
+  in all copies. In addition, all written research papers or reports  
+  describing results obtained with the help of this software should
+  properly acknowledge its use.
+
+  IN NO EVENT SHALL THE AUTHOR, OR ANY OF HIS CURRENT OR PAST EMPLOYERS,
+  BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+  CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE
+  USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE AUTHOR HAS
+  BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+  THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE AUTHOR
+  HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, 
+  ENHANCEMENTS, OR MODIFICATIONS.
+
+  The author may be contacted via:
+
+  US mail:             Marcelo Kallmann
+                       School of Engineering
+                       University of California, Merced
+                       Merced CA 95343
+  Email:               mkallmann@ucmerced.edu
+\**************************************************************************/
+
+
