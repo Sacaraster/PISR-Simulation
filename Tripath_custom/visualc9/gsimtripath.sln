@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "setut", "setut.vcproj", "{74788630-23CE-4144-B5AC-9C05D5B3EE1D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61} = {9BA837C1-1808-41B4-AB37-F871F9E70A61}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gsimtripath", "gsimtripath.vcproj", "{9BA837C1-1808-41B4-AB37-F871F9E70A61}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+		ReleaseDll|Win32 = ReleaseDll|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{74788630-23CE-4144-B5AC-9C05D5B3EE1D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{74788630-23CE-4144-B5AC-9C05D5B3EE1D}.Debug|Win32.Build.0 = Debug|Win32
+		{74788630-23CE-4144-B5AC-9C05D5B3EE1D}.Release|Win32.ActiveCfg = Release|Win32
+		{74788630-23CE-4144-B5AC-9C05D5B3EE1D}.Release|Win32.Build.0 = Release|Win32
+		{74788630-23CE-4144-B5AC-9C05D5B3EE1D}.ReleaseDll|Win32.ActiveCfg = ReleaseDll|Win32
+		{74788630-23CE-4144-B5AC-9C05D5B3EE1D}.ReleaseDll|Win32.Build.0 = ReleaseDll|Win32
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61}.Debug|Win32.Build.0 = Debug|Win32
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61}.Release|Win32.ActiveCfg = Release|Win32
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61}.Release|Win32.Build.0 = Release|Win32
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61}.ReleaseDll|Win32.ActiveCfg = ReleaseDll|Win32
+		{9BA837C1-1808-41B4-AB37-F871F9E70A61}.ReleaseDll|Win32.Build.0 = ReleaseDll|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
