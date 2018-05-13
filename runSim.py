@@ -6,7 +6,6 @@ import sys
 import math
 import pickle
 import dubins
-import xml.etree.ElementTree as ET
 
 import numpy as np
 
@@ -82,7 +81,7 @@ def loadVehicleConfig(trade_config, task_vector):
 
     #Load the modules for each vehicle
     vehicle_vector = loadRoutingConfig(trade_config, vehicle_vector, task_vector)
-    vehicle_vector = loadPathingConfig(trade_config, vehicle_vector)
+    vehicle_vector = loadPathingConfig(trade_config, vehicle_vector, task_vector)
     vehicle_vector = loadCommConfig(trade_config, vehicle_vector)
     vehicle_vector = loadDatabaseConfig(trade_config, vehicle_vector, task_vector)
   
@@ -109,7 +108,7 @@ def loadRoutingConfig(trade_config, vehicle_vector, task_vector):
 
     return vehicle_vector
 
-def loadPathingConfig(trade_config, vehicle_vector):
+def loadPathingConfig(trade_config, vehicle_vector, task_vector):
 
     print ''
     print '      Adding Pathing modules...'
@@ -118,7 +117,11 @@ def loadPathingConfig(trade_config, vehicle_vector):
 
     for vehicle in vehicle_vector:
         vehicle.add_pathing(pathing_data)
-        print '         Vehicle {} Pathing Data:'.format(vehicle.ID)
+        print '         Vehicle {} Pathing Data:'.format(vehicle.ID)        
+        try:
+            vehicle.pathing.calc_nfz_impact_rating(pathing_data, task_vector)
+        except:
+            pass
         vehicle.pathing.print_pathing_data()
 
     return vehicle_vector
