@@ -1,0 +1,36 @@
+digraph G {
+        fontname = "Bitstream Vera Sans"
+        fontsize = 8
+
+        node [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 8
+                shape = "record"
+        ]
+        edge [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 8
+        ]
+
+        Communication [
+                label = "{Communication (Meta) | | +talk() (abstract) }"
+        ]
+	No_Communication [
+                label = "{No Communication | +type: 'None' | +talk(): pass}"
+        ]
+	BC_Communication [
+                label = "{Broadcast Completions | +type: 'Completion' | +talk()}"
+        ]
+	BD_Communication [
+                label = "{Broadcast Destinations | +type: 'Destination' | +talk()}"
+        ]
+
+	CommunicationFactory [
+                label = "{CommunicationFactory | | +get_comm_module()}"
+        ]	
+
+	Communication -> No_Communication
+	Communication -> BC_Communication
+	Communication -> BD_Communication
+
+}

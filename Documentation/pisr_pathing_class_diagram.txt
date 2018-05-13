@@ -1,0 +1,35 @@
+digraph G {
+        fontname = "Bitstream Vera Sans"
+        fontsize = 8
+
+        node [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 8
+                shape = "record"
+        ]
+        edge [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 8
+        ]        
+
+	Pathing [
+                label = "{Pathing (Meta) | | +get_path() (abstract)\n +get_best_paths() (abstract)}"
+        ]
+	Euclidean [
+                label = "{Euclidean_Pathing | +type: 'Euclidean'\n+trajectory | +get_path()\n +get_best_paths()\n +calcDistanceMatrixData()}"
+        ]
+	Dubins [
+                label = "{Dubins_Pathing | +type: 'Dubins'\n+trajectory | +get_path()\n +get_best_paths()}"
+        ]
+	Tripath [
+                label = "{Tripath_Pathing | +type: 'Tripath'\n+map\n+nfz\n+trajectory\n+nfz_impact | +get_path()\n +get_best_paths()\n +calc_nfz_impact_rating()}"
+        ]
+
+	PathingFactory [
+                label = "{PathingFactory | | +get_pathing_module()}"
+        ]		
+
+	Pathing -> Euclidean
+	Pathing -> Dubins
+	Pathing -> Tripath
+}

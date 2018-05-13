@@ -1,0 +1,19 @@
+digraph G {
+        fontname = "Bitstream Vera Sans"
+        fontsize = 8
+
+        node [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 8
+                shape = "record"
+        ]
+        edge [
+                fontname = "Bitstream Vera Sans"
+                fontsize = 8
+        ]        
+
+	Vehicle [
+                label = "{Vehicle | +_indexer\n+ID\n+location\n+time\n+heading\n+speed\n+turn_radius\n+t_activate\n+t_terminate | +add_routing()\n +add_pathing()\n +add_comm()\n +add_database()}"
+        ]
+	
+}
