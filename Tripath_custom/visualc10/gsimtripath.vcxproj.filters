@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="graphsim">
+      <UniqueIdentifier>{3004d1ba-ef26-4250-9f37-284923805a3a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="symedge">
+      <UniqueIdentifier>{ce87d3fd-babc-4a11-8a8b-c85d997b1ea6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\gsim\gs.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_array.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_geo2.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_input.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_output.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_polygon.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_set.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_string.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_tree.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\gs_vec2.cpp">
+      <Filter>graphsim</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_dcdt.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_dcdt_elements.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_dcdt_manager.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_elements.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_lct.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_lct_funnel.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_lct_search.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_lct_tests.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_mesh.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_mesh_import.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_mesh_io.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_mesh_operators.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_triangulator.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_triangulator_manager.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_triangulator_search.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gsim\se_triangulator_tools.cpp">
+      <Filter>symedge</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\gsim\gs.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_array.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_deque.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_geo2.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_heap.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_input.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_manager.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_output.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_polygon.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_set.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_shared.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_string.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_trace.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_tree.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\gs_vec2.h">
+      <Filter>graphsim</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_dcdt.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_dcdt_elements.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_dcdt_manager.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_elements.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_mesh.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_mesh_import.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_triangulator.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gsim\se_triangulator_internal.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+    <ClInclude Include="..\gsim\se_triangulator_manager.h">
+      <Filter>symedge</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\license.txt" />
+    <None Include="..\readme.txt" />
+  </ItemGroup>
+</Project>
