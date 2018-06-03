@@ -63,30 +63,32 @@ def plotResults(tradeID, task_vector, vehicle_vector, latency_t_vector, indiv_la
             +r' $\beta$={}, '.format(vehicle_vector[0].routing.beta)+r'$w$={0}'.format(vehicle_vector[0].routing.w)+'\n'+
             r'$p$={0}'.format(priority_vector)+'\n'+
             r'$\bar L$={}'.format(np.around(avg_latency,decimals=2))+ r', $L_\max$={}'.format(np.around(max_latency, decimals=2)),
-            fontsize=16)
+            fontsize=18)
     if vehicle_vector[0].routing.type == 'Manual':     #Note: this assumes all vehicles have same routing information
         axarr[0].set_title('{}:'.format(vehicle_vector[0].routing.type)
             +r'$seq$={0}'.format(vehicle_vector[0].routing.sequence_vector)+'\n'+
             r'$p$={0}'.format(priority_vector)+'\n'+
             r'$\bar L$={}'.format(np.around(avg_latency,decimals=2))+ r', $L_\max$={}'.format(np.around(max_latency, decimals=2)),
-            fontsize=16)    
+            fontsize=18)    
     axarr[0].set_ylabel('Latency', fontsize=14)
 
     #Plot the task visit times
     for entry in visit_order:
         visit_time = entry[2]
-        axarr[1].plot(visit_time, entry[1], linestyle='', marker='*', markersize=19,
+        axarr[1].plot(visit_time, entry[1], linestyle='', marker='*', markersize=14,
             color=cmapVehicles(normVehicles(entry[0])))    
     axarr[1].set_ylabel('Task ID', fontsize=14)
     axarr[1].get_yaxis().set_major_locator(MaxNLocator(integer=True))
-    vehicleLegendEntries = []
-    for vehicle in vehicle_vector:
-        vehicleLegendEntries.append(mlines.Line2D([], [], color=cmapVehicles(normVehicles(int(vehicle.ID))),
-            linestyle='', marker='*', markersize=15, label='Vehicle[{}]'.format(int(vehicle.ID))))
-    axarr[1].legend(handles=[i for i in vehicleLegendEntries], numpoints=1, fontsize=9)
+    # vehicleLegendEntries = []
+    # for vehicle in vehicle_vector:
+    #     vehicleLegendEntries.append(mlines.Line2D([], [], color=cmapVehicles(normVehicles(int(vehicle.ID))),
+    #         linestyle='', marker='*', markersize=15, label='Vehicle[{}]'.format(int(vehicle.ID))))
+    # axarr[1].legend(handles=[i for i in vehicleLegendEntries], numpoints=1, fontsize=9)
 
     plt.tight_layout()
-    plt.savefig('{0}Trade{1}.png'.format(save_path, tradeID))
+    axarr[0].tick_params(labelsize=14)
+    axarr[1].tick_params(labelsize=14)
+    plt.savefig('{0}Trade{1}.pdf'.format(save_path, tradeID))
     plt.close()
 
 def plotScenarioMap(task_vector, task_geometry, save_path):
@@ -94,7 +96,7 @@ def plotScenarioMap(task_vector, task_geometry, save_path):
     max_y = max(task.location[1] for task in task_vector)
     min_y = min(task.location[1] for task in task_vector)
 
-    label_scaling = (max_y-min_y)*.025
+    label_scaling = (max_y-min_y)*.03
 
     plt.figure()
     plt.margins(.1)
@@ -102,13 +104,14 @@ def plotScenarioMap(task_vector, task_geometry, save_path):
         taskLabel = 'T[{}]'.format(task.ID)
         plt.plot(task.location[0],task.location[1], color=[.5,.5,.5], linestyle=' ', marker='o', markersize=14)
         plt.text(task.location[0],task.location[1]-label_scaling, taskLabel,
-            color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=12, zorder=3)    
+            color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=14, zorder=3)    
         
     plt.title('{} Task Configuration'.format(task_geometry), fontsize=18)
     plt.xlabel('East, (m)', fontsize=14)
     plt.ylabel('North, (m)', fontsize=14)
-    plt.axes().set_aspect('equal')   
-    plt.savefig('{0}{1}_ScenarioMap.png'.format(save_path, task_geometry))
+    plt.axes().set_aspect('equal')
+    plt.axes().tick_params(labelsize=14)   
+    plt.savefig('{0}{1}_ScenarioMap.pdf'.format(save_path, task_geometry))
 
 def plotTrajectories(save_path, tradeID, visit_order, task_vector, vehicle_vector, task_geometry, normVehicles, cmapVehicles):
 
@@ -129,12 +132,12 @@ def plotTrajectories(save_path, tradeID, visit_order, task_vector, vehicle_vecto
     # Overlay the tasks and their priorities
     max_y = max(task.location[1] for task in task_vector)
     min_y = min(task.location[1] for task in task_vector)
-    label_scaling = (max_y-min_y)*.025
+    label_scaling = (max_y-min_y)*.03
     for task in task_vector:
         taskLabel = 'T[{}]'.format(task.ID)
         plt.plot(task.location[0],task.location[1], color=[.5,.5,.5], linestyle=' ', marker='o', markersize=14)
         plt.text(task.location[0],task.location[1]-label_scaling, taskLabel,
-            color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=12, zorder=3)
+            color=[.1,.1,.1], horizontalalignment='center', verticalalignment='top', size=14, zorder=3)
     vehicleLegendEntries = []
     for vehicle in vehicle_vector:
         vehicleLegendEntries.append(mlines.Line2D([], [], color=cmapVehicles(normVehicles(int(vehicle.ID))),
@@ -208,33 +211,42 @@ def getNFZcoords(task_geometry, nfz):
 
 def calcVisitsPerHour(save_path, tradeID, visit_order):
 
-    visit_rates = []    
+    visit_rates = [] 
 
     unique_tasks = np.unique(visit_order[:,1])
-    time_max = visit_order[-1,2]
-    running_time = time_max/3600
-    # print visit_order
+    time_max = visit_order[-1,2]      #length of sim in seconds
+    time_max_h = time_max/3600          #length of sim in hrs
     for task in unique_tasks:
         num_visits = len(np.where(task==visit_order[:,1])[0])
-        task_visit_rate = num_visits/running_time
+        task_visit_rate = num_visits/time_max_h
         visit_rates.append([tradeID,task,task_visit_rate])
 
     return visit_rates
 
 def plotVisitsPerHour(save_path, visit_rates_data):
 
+    visit_rates_data = np.array(visit_rates_data)
+    visit_rates_data = np.reshape(visit_rates_data, (-1, 3))
+
     visit_ratesPD = pd.DataFrame(data=visit_rates_data, columns=['Trade ID','Task','Visit Rate'])
+    visit_ratesPD['Trade ID'] = visit_ratesPD['Trade ID'].astype(int)
+    visit_ratesPD['Task'] = visit_ratesPD['Task'].astype(int)
     visit_ratesPlotablePD = visit_ratesPD.pivot(index='Trade ID', columns='Task', values='Visit Rate')
 
-    ax = visit_ratesPlotablePD.plot(kind='bar', title='Mean Visit Rates')
-    # ax.set_xticklabels(np.arange(0, 10.5, .5))
-    ax.grid(color='b', linestyle='-', linewidth=0.1)
+
+    ax = visit_ratesPlotablePD.plot.bar(title='Mean Visit Rates')
+    # # ax.set_xticklabels(np.arange(0, 10.5, .5))
+    # ax.grid(color='b', linestyle='-', linewidth=0.1)
     ax.set_xlabel('Trade ID') #, fontweight='bold', fontsize=28)
+    # ax.text(0,120, r'$w_3=1.0$', fontsize=14, horizontalalignment='center')
+    # ax.text(1,120, r'$w_3=1.4$', fontsize=14, horizontalalignment='center')
+    # ax.text(2.0,120, r'$w_3=1.5$', fontsize=14, horizontalalignment='center')
+    # ax.text(3.0,165, r'$w_3=1.51$', fontsize=14, horizontalalignment='center')
     # ax.set_xlabel(r'Distance Discount Parameter, $\beta$')
-    # ax.set_xlabel(r'Weight of Task 3, $w_3$') #, fontweight='bold', fontsize=28)
+    # ax.set_xlabel(r'Weight of Task 3, $w_3$') #, fontweight='bold', fontsize=28))
     ax.set_ylabel('Mean Visit Rate (vph)') #, fontweight='bold', fontsize=28)
     plt.tight_layout()
-    plt.savefig('{0}VisitsPerHour.png'.format(save_path))
+    plt.savefig('{0}VisitsPerHour.pdf'.format(save_path))
     plt.close()
 
 
@@ -267,10 +279,8 @@ def main():
             vehicle_vector = trade_results[3]
             num_vehicles = len(vehicle_vector)
             tradeID = trade_results[4]
-            task_geometry = trade_results[5]              
+            task_geometry = trade_results[5]      
 
-            # #Calculate the visit rates for the trade and save for plotting at the end
-            # !NOT WORKING!
             # print ''
             # print '   Performing visit rate calculations...'
             # visit_rates = calcVisitsPerHour(save_path, tradeID, visit_order)
@@ -341,7 +351,6 @@ def main():
     print '...complete!\n'
 
     # #Plot and save the visit rates chart
-    # !NOT WORKING!    
     # print 'Plotting visits per hour...'
     # plotVisitsPerHour(save_path, visit_rates_data)
     # print '...complete!\n'       
