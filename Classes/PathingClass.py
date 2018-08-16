@@ -124,9 +124,10 @@ class Dubins_Pathing(Pathing):
         path_length_vector = []
         #Discretized arrival headings (try each of these and pick the one with the shortest travel distance)
         thetas = np.arange(0, 20, 1.25)*(math.pi/10)
+
         #If arriving at the current task at the current heading, slightly change arrival angle (prevents travel time of zero)
         for theta_index, theta in enumerate(thetas):                
-            if (int(vehicle.location.ID-1) == vehicle.routing.destination.ID) & (theta0==theta):
+            if (vehicle.location.ID == vehicle.routing.destination.ID) & (theta0==theta):
                 thetas[theta_index] = theta0 + 0.0174533   #add 1 degree to arrivalangle
         for theta1 in thetas:
             #Cacluate the path length for given arrival angle
@@ -329,11 +330,11 @@ class Tripath_Pathing(Pathing):
 
 class PathingFactory:
     def get_pathing_module(self, pathing_data):
-        if pathing_data[0] == 'Euclidean':            
+        if pathing_data == 'Euclidean':            
             return Euclidean_Pathing()
-        elif pathing_data[0] == 'Dubins':
+        elif pathing_data == 'Dubins':
             return Dubins_Pathing()
-        elif pathing_data[0] == 'Tripath':            
+        elif pathing_data == 'Tripath':            
             return Tripath_Pathing(pathing_data[1], pathing_data[2])
         else:
             raise NotImplementedError("Unknown pathing type.")

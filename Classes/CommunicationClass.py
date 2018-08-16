@@ -54,11 +54,11 @@ class Destination_Communication(Communication):
 
 class CommunicationFactory:
     def get_comm_module(self, comm_data):
-        if comm_data[0] == 'None':            
+        if comm_data == 'None':            
             return No_Communication()
-        elif comm_data[0] == 'Completion':
+        elif comm_data == 'Completion':
             return Completion_Communication()
-        elif comm_data[0] == 'Destination':
+        elif comm_data == 'Destination':
             return Destination_Communication()
         else:
             raise NotImplementedError("Unknown communication type.")

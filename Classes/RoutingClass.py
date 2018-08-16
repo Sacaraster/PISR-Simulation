@@ -22,20 +22,16 @@ class MD2WRP_Routing(Routing):
 
     def __init__(self, vehicle, task_vector, beta, w, distance_measure):        
         self.type = 'MD2WRP'
-        self.destination = vehicle.location   # destination task (a task object)
-        self.arrival_time = vehicle.time  
+        self.destination = vehicle.location   # destination (a Task object)
+        self.arrival_time = vehicle.time  #current time
         self.beta = beta
-        self.w = w
+        self.w = w[0:len(task_vector)]
         #generate a pathing object for calculating longest distance between tasks
         pathing_object = PathingClass.Euclidean_Pathing()
         avgDistance, longestDistance = pathing_object.calcDistanceMatrixData(task_vector)
         self.norm_factor = longestDistance/vehicle.speed
-        # if distance_measure == 1:
-        self.distance_measure = distance_measure
-        # if distance_measure == 2:
-        #     self.distance_measure = ['Dubins']
-        # if distance_measure == 3:
-        #     self.distance_measure = ['Tripath']
+        # self.norm_factor = 1  #use this if you don't want to normalize travel times
+        self.distance_measure = distance_measure        
 
     def print_routing_data(self):
         print '            Type:', self.type
@@ -98,16 +94,17 @@ class MD2WRP_Routing(Routing):
 
 class Manual_Routing(Routing):
 
-    def __init__(self, vehicle, seq_vector, veh_start_index_vector):
+    def __init__(self, vehicle, seq_vector, veh_start_index):
         self.type = 'Manual'
-        self.destination = vehicle.location   # destination task (a task object)
+        self.destination = vehicle.location   # destination (a Task object)
         self.arrival_time = vehicle.time  
-        self.current_stop = veh_start_index_vector[vehicle._indexer]   #not a task, but the index in the sequence 
-        self.sequence_vector = seq_vector[vehicle._indexer]
+        self.current_stop = veh_start_index   #not a task, but the index in the sequence 
+        self.sequence_vector = seq_vector #task visit sequence
 
     def print_routing_data(self):
         print '            Type:', self.type
         print '            Sequence:', self.sequence_vector
+        print '            Start Location: Task {} (Index {})'.format(self.sequence_vector[self.current_stop], self.current_stop)
 
     def get_next_task(self, vehicle, task_vector):
         print "      Selecting next task in the sequence,", self.sequence_vector
@@ -131,9 +128,9 @@ class Manual_Routing(Routing):
 
 class RoutingFactory:
     def get_routing_module(self, routing_data, vehicle, task_vector):
-        if routing_data[0] == 'MD2WRP':            
+        if routing_data[0] == 'MD2WRP':          
             return MD2WRP_Routing(vehicle, task_vector, routing_data[1], routing_data[2], routing_data[3])
         elif routing_data[0] == 'Manual':
-            return Manual_Routing(vehicle, routing_data[4], routing_data[5])        
+            return Manual_Routing(vehicle, routing_data[1], routing_data[2])        
         else:
             raise NotImplementedError("Unknown routing type.")
