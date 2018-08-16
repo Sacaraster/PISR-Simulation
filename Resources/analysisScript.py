@@ -3,7 +3,7 @@ import sys
 import math
 import pickle
 
-sys.path.append('/home/chris/Research/PISR_Sim_NGpp')
+sys.path.append('/home/chris/Research/PUMPS')
 # import Classes.VehicleClass
 
 import numpy as np
@@ -79,11 +79,11 @@ def plotResults(tradeID, task_vector, vehicle_vector, latency_t_vector, indiv_la
             color=cmapVehicles(normVehicles(entry[0])))    
     axarr[1].set_ylabel('Task ID', fontsize=14)
     axarr[1].get_yaxis().set_major_locator(MaxNLocator(integer=True))
-    # vehicleLegendEntries = []
-    # for vehicle in vehicle_vector:
-    #     vehicleLegendEntries.append(mlines.Line2D([], [], color=cmapVehicles(normVehicles(int(vehicle.ID))),
-    #         linestyle='', marker='*', markersize=15, label='Vehicle[{}]'.format(int(vehicle.ID))))
-    # axarr[1].legend(handles=[i for i in vehicleLegendEntries], numpoints=1, fontsize=9)
+    vehicleLegendEntries = []
+    for vehicle in vehicle_vector:
+        vehicleLegendEntries.append(mlines.Line2D([], [], color=cmapVehicles(normVehicles(int(vehicle.ID))),
+            linestyle='', marker='*', markersize=15, label='Vehicle[{}]'.format(int(vehicle.ID))))
+    axarr[1].legend(handles=[i for i in vehicleLegendEntries], numpoints=1, fontsize=9)
 
     plt.tight_layout()
     axarr[0].tick_params(labelsize=14)
